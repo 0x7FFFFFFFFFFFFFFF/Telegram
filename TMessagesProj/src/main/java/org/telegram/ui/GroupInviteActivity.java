@@ -154,7 +154,7 @@ public class GroupInviteActivity extends BaseFragment implements NotificationCen
                 builder.setTitle(LocaleController.getString(R.string.RevokeLink));
                 builder.setPositiveButton(LocaleController.getString(R.string.RevokeButton), (dialogInterface, i) -> generateLink(true));
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             }
         });
 

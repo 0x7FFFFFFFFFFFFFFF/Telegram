@@ -436,7 +436,7 @@ public class BoostDialogs {
         builder.setNegativeButton(getString("Discard", R.string.Discard), (dialogInterface, i) -> {
             onDiscard.run();
         });
-        builder.show();
+        builder.create().confirm();
     }
 
     public static boolean checkReduceUsers(Context context, Theme.ResourcesProvider resourcesProvider, List<TLRPC.TL_premiumGiftCodeOption> list, TLRPC.TL_premiumGiftCodeOption selected) {

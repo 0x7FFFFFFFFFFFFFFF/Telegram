@@ -727,7 +727,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 });
                 builder.setNegativeButton(getString(R.string.Cancel), null);
                 AlertDialog alertDialog = builder.create();
-                builder.show();
+                alertDialog.confirm();
                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(getThemedColor(Theme.key_text_RedBold));

@@ -761,7 +761,7 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
                             }
                         });
                         builder.setNegativeButton(getString(R.string.Cancel), null);
-                        showDialog(builder.create());
+                        builder.create().confirm();
                     }
                 }
             }
@@ -1099,7 +1099,7 @@ public class ContactsActivity extends BaseFragment implements FactorAnimator.Tar
         });
         builder.setNegativeButton(getString(R.string.Cancel), (dialog, which) -> dialog.dismiss());
         AlertDialog dialog = builder.create();
-        dialog.show();
+        dialog.confirm();
         dialog.redPositive();
     }
 

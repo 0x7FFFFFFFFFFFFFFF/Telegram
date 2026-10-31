@@ -6891,7 +6891,7 @@ public class EmojiView extends FrameLayout implements
                                             .setPositiveButton(getString(R.string.ClearButton), (dialog, which) -> MediaDataController.getInstance(currentAccount).clearRecentStickers())
                                             .setNegativeButton(getString(R.string.Cancel), null)
                                             .create();
-                                    alertDialog.show();
+                                    alertDialog.confirm();
                                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                                     if (button != null) {
                                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

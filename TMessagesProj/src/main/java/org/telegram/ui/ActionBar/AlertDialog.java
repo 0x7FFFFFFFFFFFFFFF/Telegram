@@ -1527,6 +1527,16 @@ public class AlertDialog extends Dialog implements Drawable.Callback, Notificati
         dismissDialogByButtons = value;
     }
 
+    // runs the positive button's action as if it was tapped, without showing the dialog
+    public void confirm() {
+        if (positiveButtonListener != null) {
+            positiveButtonListener.onClick(this, Dialog.BUTTON_POSITIVE);
+        }
+        if (dismissDialogByButtons) {
+            dismiss();
+        }
+    }
+
     public void setProgress(int progress) {
         currentProgress = progress;
         if (lineProgressView != null) {

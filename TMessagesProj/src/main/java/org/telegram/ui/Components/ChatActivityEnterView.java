@@ -1833,7 +1833,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                                         MessagesController.getGlobalMainSettings().edit().putBoolean("trimvoicehint", false).apply();
                                     })
                                     .setNegativeButton(getString(R.string.Cancel), null)
-                                    .show();
+                                    .create().confirm();
                             } else {
                                 trim.run();
                             }
@@ -2774,7 +2774,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                     }
                 })
                 .makeRed(AlertDialog.BUTTON_POSITIVE)
-                .show();
+                .create().confirm();
         });
         messageEditTextContainer.addView(deleteRichDraftButton, LayoutHelper.createFrame(DEFAULT_HEIGHT, DEFAULT_HEIGHT, Gravity.BOTTOM | Gravity.LEFT, 2, 0, 0, 0));
 
@@ -12364,7 +12364,7 @@ public class ChatActivityEnterView extends FrameLayout implements
                 builder.setMessage(getString(R.string.ClearRecentEmojiText));
                 builder.setPositiveButton(getString(R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
                 builder.setNegativeButton(getString(R.string.Cancel), null);
-                parentFragment.showDialog(builder.create());
+                builder.create().confirm();
             }
 
             @Override

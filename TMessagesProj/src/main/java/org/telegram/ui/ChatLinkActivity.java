@@ -485,7 +485,7 @@ public class ChatLinkActivity extends BaseFragment implements NotificationCenter
                     });
                     builder.setNegativeButton(getString(R.string.Cancel), null);
                     AlertDialog dialog = builder.create();
-                    showDialog(dialog);
+                    dialog.confirm();
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -568,7 +568,7 @@ public class ChatLinkActivity extends BaseFragment implements NotificationCenter
             linkChat(chat, null);
         });
         builder.setNegativeButton(getString(R.string.Cancel), null);
-        showDialog(builder.create());
+        builder.create().confirm();
     }
 
     private void linkChat(TLRPC.Chat chat, BaseFragment createFragment) {

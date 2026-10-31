@@ -8,7 +8,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
@@ -743,27 +742,8 @@ public class SecretVoicePlayer extends Dialog {
             return;
         }
         if (!dismissing && messageObject != null && !messageObject.isOutOwner()) {
-            backDialog = new AlertDialog.Builder(getContext(), resourcesProvider)
-                    .setTitle(LocaleController.getString(isRound ? R.string.VideoOnceCloseTitle : R.string.VoiceOnceCloseTitle))
-                    .setMessage(LocaleController.getString(isRound ? R.string.VideoOnceCloseMessage : R.string.VoiceOnceCloseMessage))
-                    .setPositiveButton(LocaleController.getString(R.string.Continue), (di, w) -> {
-                        if (backDialog != null) {
-                            backDialog.dismiss();
-                        }
-                    })
-                    .setNegativeButton(LocaleController.getString(R.string.Delete), (di, w) -> {
-                        if (backDialog != null) {
-                            backDialog.dismiss();
-                            backDialog = null;
-                        }
-                        dismiss();
-                    })
-                    .create();
-            backDialog.show();
-            TextView button = (TextView) backDialog.getButton(DialogInterface.BUTTON_NEGATIVE);
-            if (button != null) {
-                button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
-            }
+            // "Close and delete?" Continue / Delete: closing deletes the view-once message, do it directly
+            dismiss();
             return;
         }
         super.onBackPressed();

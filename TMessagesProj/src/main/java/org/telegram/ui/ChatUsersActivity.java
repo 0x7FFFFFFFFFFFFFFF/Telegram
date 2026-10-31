@@ -1150,32 +1150,23 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
                     presentFragment(fragment);
                     return;
                 } else if (position == gigaConvertRow) {
-                    showDialog(new GigagroupConvertAlert(getParentActivity(), ChatUsersActivity.this) {
-                        @Override
-                        protected void onCovert() {
-                            getMessagesController().convertToGigaGroup(getParentActivity(), currentChat, ChatUsersActivity.this, (result) -> {
-                                if (result && parentLayout != null) {
-                                    BaseFragment editActivity = parentLayout.getFragmentStack().get(parentLayout.getFragmentStack().size() - 2);
-                                    if (editActivity instanceof ChatEditActivity) {
-                                        editActivity.removeSelfFromStack();
+                    // converts right away; this used to open GigagroupConvertAlert (Convert / Leave as regular group, then "Are you sure?")
+                    getMessagesController().convertToGigaGroup(getParentActivity(), currentChat, ChatUsersActivity.this, (result) -> {
+                        if (result && parentLayout != null) {
+                            BaseFragment editActivity = parentLayout.getFragmentStack().get(parentLayout.getFragmentStack().size() - 2);
+                            if (editActivity instanceof ChatEditActivity) {
+                                editActivity.removeSelfFromStack();
 
-                                        Bundle args = new Bundle();
-                                        args.putLong("chat_id", chatId);
-                                        ChatEditActivity fragment = new ChatEditActivity(args);
-                                        fragment.setInfo(info);
-                                        parentLayout.addFragmentToStack(fragment, parentLayout.getFragmentStack().size() - 1);
-                                        finishFragment();
-                                        fragment.showConvertTooltip();
-                                    } else {
-                                        finishFragment();
-                                    }
-                                }
-                            });
-                        }
-
-                        @Override
-                        protected void onCancel() {
-
+                                Bundle args = new Bundle();
+                                args.putLong("chat_id", chatId);
+                                ChatEditActivity fragment = new ChatEditActivity(args);
+                                fragment.setInfo(info);
+                                parentLayout.addFragmentToStack(fragment, parentLayout.getFragmentStack().size() - 1);
+                                finishFragment();
+                                fragment.showConvertTooltip();
+                            } else {
+                                finishFragment();
+                            }
                         }
                     });
                 } else if (position == addNew2Row) {
@@ -1337,7 +1328,7 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
                             builder.setMessage(LocaleController.formatString("AdminWillBeRemoved", R.string.AdminWillBeRemoved, UserObject.getUserName(user)));
                             builder.setPositiveButton(getString("OK", R.string.OK), (dialog, which) -> openRightsEdit(user.id, participant, ar, br, rankFinal, canEdit, selectType == SELECT_TYPE_ADMIN ? 0 : 1, false));
                             builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
-                            showDialog(builder.create());
+                            builder.create().confirm();
                         } else {
                             openRightsEdit(peerId, participant, adminRights, bannedRights, rank, canEditAdmin, selectType == SELECT_TYPE_ADMIN ? 0 : 1, selectType == SELECT_TYPE_ADMIN || selectType == SELECT_TYPE_EXCEPTION);
                         }
@@ -1916,14 +1907,13 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
                 .addIf(allowSetAdmin, R.drawable.msg_admins, editingAdmin ? getString(R.string.EditAdminRights) : getString(R.string.SetAsAdmin), () -> openRightsFor.run(0))
                 .addIf(canChangePermission, R.drawable.msg_permissions, getString("ChangePermissions", R.string.ChangePermissions), () -> {
                     if (participant instanceof TLRPC.TL_channelParticipantAdmin || participant instanceof TLRPC.TL_chatParticipantAdmin) {
-                        showDialog(
-                            new AlertDialog.Builder(getParentActivity())
-                                .setTitle(getString("AppName", R.string.AppName))
-                                .setMessage(LocaleController.formatString(R.string.AdminWillBeRemoved, UserObject.getUserName(user)))
-                                .setPositiveButton(getString("OK", R.string.OK), (dialog, which) -> openRightsFor.run(1))
-                                .setNegativeButton(getString("Cancel", R.string.Cancel), null)
-                                .create()
-                        );
+                        new AlertDialog.Builder(getParentActivity())
+                            .setTitle(getString("AppName", R.string.AppName))
+                            .setMessage(LocaleController.formatString(R.string.AdminWillBeRemoved, UserObject.getUserName(user)))
+                            .setPositiveButton(getString("OK", R.string.OK), (dialog, which) -> openRightsFor.run(1))
+                            .setNegativeButton(getString("Cancel", R.string.Cancel), null)
+                            .create()
+                            .confirm();
                     } else {
                         openRightsFor.run(1);
                     }
@@ -2153,7 +2143,7 @@ public class ChatUsersActivity extends BaseFragment implements NotificationCente
                 }
                 builder.setPositiveButton(getString("ApplyTheme", R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(getString("PassportDiscard", R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

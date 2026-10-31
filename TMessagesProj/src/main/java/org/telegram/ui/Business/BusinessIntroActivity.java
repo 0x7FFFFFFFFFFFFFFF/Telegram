@@ -495,7 +495,7 @@ public class BusinessIntroActivity extends UniversalFragment implements Notifica
                 builder.setMessage(LocaleController.getString(R.string.BusinessIntroUnsavedChanges));
                 builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

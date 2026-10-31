@@ -955,7 +955,8 @@ public class SearchViewPager extends ViewPagerFixed implements FilteredSearchVie
                 parent.getDownloadController().deleteRecentFiles(messageObjects);
                 hideActionMode();
             });
-            AlertDialog alertDialog = builder.show();
+            AlertDialog alertDialog = builder.create();
+            alertDialog.confirm();
             TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (button != null) {
                 button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

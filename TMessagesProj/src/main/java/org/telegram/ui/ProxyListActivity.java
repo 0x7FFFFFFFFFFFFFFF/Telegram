@@ -486,7 +486,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                     }
                 });
                 AlertDialog dialog = builder.create();
-                showDialog(dialog);
+                dialog.confirm();
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -549,7 +549,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                             }
                         });
                         AlertDialog dialog = builder.create();
-                        showDialog(dialog);
+                        dialog.confirm();
                         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                         if (button != null) {
                             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

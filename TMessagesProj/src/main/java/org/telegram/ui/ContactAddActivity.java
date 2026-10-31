@@ -458,7 +458,7 @@ public class ContactAddActivity extends BaseFragment implements NotificationCent
                             updateCustomPhotoInfo();
                             getNotificationCenter().postNotificationName(NotificationCenter.reloadDialogPhotos);
                             getNotificationCenter().postNotificationName(NotificationCenter.updateInterfaces, MessagesController.UPDATE_MASK_AVATAR);
-                        }, resourcesProvider).show();
+                        }, resourcesProvider).create().confirm();
             });
 
             suggestBirthday = new TextCell(context, resourcesProvider);
@@ -623,7 +623,8 @@ public class ContactAddActivity extends BaseFragment implements NotificationCent
                 })
                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                 .makeRed(DialogInterface.BUTTON_POSITIVE)
-                .show();
+                .create()
+                .confirm();
         } else if (item.id == 2) {
             checkShare = !checkShare;
             ((TextCheckCell) view).setChecked(checkShare);

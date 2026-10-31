@@ -132,7 +132,7 @@ public class BookmarksFragment extends UniversalFragment {
             })
             .setNegativeButton(getString(R.string.Cancel), null)
             .makeRed(AlertDialog.BUTTON_POSITIVE)
-            .show();
+            .create().confirm();
     }
 
     public void gotoMessage() {

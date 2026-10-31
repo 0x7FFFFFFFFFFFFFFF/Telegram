@@ -121,7 +121,7 @@ public class HashtagHistoryView extends FrameLayout {
             });
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
             AlertDialog alertDialog = builder.create();
-            alertDialog.show();
+            alertDialog.confirm();
             return true;
         }
         return false;

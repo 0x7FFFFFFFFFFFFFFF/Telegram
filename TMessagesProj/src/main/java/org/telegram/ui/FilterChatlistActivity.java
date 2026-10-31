@@ -889,7 +889,7 @@ public class FilterChatlistActivity extends BaseFragment {
                 builder.setMessage(LocaleController.getString(R.string.UnsavedChangesMessage));
                 builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> save());
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

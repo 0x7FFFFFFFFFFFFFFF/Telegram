@@ -1244,7 +1244,7 @@ public class ChannelCreateActivity extends BaseFragment implements NotificationC
                                 }
                             }, ConnectionsManager.RequestFlagInvokeAfter);
                         });
-                        showDialog(builder.create());
+                        builder.create().confirm();
                     }, false, 0);
                     adminedChannelCell.setChannel(res.chats.get(a), a == res.chats.size() - 1);
                     adminedChannelCells.add(adminedChannelCell);

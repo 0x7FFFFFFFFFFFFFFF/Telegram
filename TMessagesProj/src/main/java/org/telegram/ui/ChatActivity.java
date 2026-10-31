@@ -962,6 +962,8 @@ public class ChatActivity extends BaseFragment implements
     private boolean needSelectFromMessageId;
     private int returnToMessageId;
     private int returnToLoadIndex;
+    // tablet two-pane mode: positions left by jumps inside the chat, restored by the back gesture (newest last)
+    private final ArrayList<BackScrollPosition> backScrollPositions = new ArrayList<>();
     private int createUnreadMessageAfterId;
     private boolean createUnreadMessageAfterIdLoading;
     private boolean loadingFromOldPosition;
@@ -4112,7 +4114,7 @@ public class ChatActivity extends BaseFragment implements
                             })
                             .setNegativeButton(getString(R.string.Cancel), null)
                             .create();
-                    showDialog(dialog);
+                    dialog.confirm();
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -7560,7 +7562,7 @@ public class ChatActivity extends BaseFragment implements
                     builder.setMessage(LocaleController.getString(R.string.ClearSearch));
                     builder.setPositiveButton(LocaleController.getString(R.string.ClearButton), (dialogInterface, i) -> mentionContainer.getAdapter().clearRecentHashtags());
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                    showDialog(builder.create());
+                    builder.create().confirm();
                     return true;
                 }
             }
@@ -7843,9 +7845,8 @@ public class ChatActivity extends BaseFragment implements
 
         overlayView = new View(context);
         overlayView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                checkRecordLocked(true, false);
-            }
+            // a tap here used to ask whether to discard the locked recording; with that prompt gone it would
+            // silently throw the recording away, so the tap is ignored (back or the recorder's cancel discard it)
             overlayView.getParent().requestDisallowInterceptTouchEvent(true);
             return true;
         });
@@ -8597,7 +8598,7 @@ public class ChatActivity extends BaseFragment implements
                     builder.setPositiveButton(LocaleController.getString(R.string.OK), (dialogInterface, i) -> getMessagesController().unblockPeer(currentUser.id));
                     builder.setTitle(LocaleController.getString(R.string.AppName));
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                    showDialog(builder.create());
+                    builder.create().confirm();
                 }
             } else if (UserObject.isReplyUser(currentUser)) {
                 toggleMute(true);
@@ -10703,6 +10704,10 @@ public class ChatActivity extends BaseFragment implements
         if (createUnreadMessageAfterId != 0) {
             scrollToMessageId(createUnreadMessageAfterId, 0, false, returnToLoadIndex, true, 0, null, inCaseLoading);
         } else if (returnToMessageId > 0) {
+            if (!backScrollPositions.isEmpty() && backScrollPositions.get(backScrollPositions.size() - 1).fromMessageId == returnToMessageId) {
+                // returning with the button undoes that jump already
+                backScrollPositions.remove(backScrollPositions.size() - 1);
+            }
             scrollToMessageId(returnToMessageId, 0, true, returnToLoadIndex, true, 0, null, inCaseLoading);
         } else {
             scrollToLastMessage(true, !forceScrollToMessageBottom, inCaseLoading);
@@ -11509,8 +11514,10 @@ public class ChatActivity extends BaseFragment implements
         pinnedMessageView.setOnClickListener(v -> {
             wasManualScroll = true;
             if (isThreadChat() && !isTopic) {
+                pushBackScrollPosition(0);
                 scrollToMessageId((int) threadMessageId, 0, true, 0, true, 0);
             } else if (currentPinnedMessageId != 0) {
+                pushBackScrollPosition(0);
                 int currentPinned = currentPinnedMessageId;
 
                 int forceNextPinnedMessageId = 0;
@@ -11673,7 +11680,7 @@ public class ChatActivity extends BaseFragment implements
                     unpinMessage(messageObject);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             } else if (!pinnedMessageIds.isEmpty()) {
                 SharedPreferences preferences = MessagesController.getNotificationsSettings(currentAccount);
                 preferences.edit().putInt("pin_" + dialog_id, pinnedMessageIds.get(0)).commit();
@@ -11731,7 +11738,7 @@ public class ChatActivity extends BaseFragment implements
             openForwardingPreview(MessagePreviewView.TAB_FORWARD);
         });
         AlertDialog dialog = builder.create();
-        showDialog(dialog);
+        dialog.confirm();
         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -11775,6 +11782,7 @@ public class ChatActivity extends BaseFragment implements
         fragment.chatActivityDelegate = new ChatActivityDelegate() {
             @Override
             public void openReplyMessage(int mid) {
+                pushBackScrollPosition(0);
                 scrollToMessageId(mid, 0, true, 0, true, 0);
             }
 
@@ -12518,6 +12526,7 @@ public class ChatActivity extends BaseFragment implements
         if (messages.isEmpty()) {
             return;
         }
+        pushBackScrollPosition(0);
         MessageObject firstMessage = messages.get(0);
         MessageObject lastMessage = messages.get(messages.size() - 1);
         if (firstMessage.messageOwner.date >= date && lastMessage.messageOwner.date <= date || lastMessage.messageOwner.date >= date && endReached[0]) {
@@ -13074,6 +13083,7 @@ public class ChatActivity extends BaseFragment implements
         fragment.chatActivityDelegate = new ChatActivityDelegate() {
             @Override
             public void openReplyMessage(int mid) {
+                pushBackScrollPosition(0);
                 scrollToMessageId(mid, 0, true, 0, true, 0);
             }
 
@@ -17073,6 +17083,9 @@ public class ChatActivity extends BaseFragment implements
             }
             return;
         }
+        if (fromMessageId != 0) {
+            pushBackScrollPosition(fromMessageId);
+        }
 
         forceNextPinnedMessageId = Math.abs(forcePinnedMessageId);
         forceScrollToFirst = forcePinnedMessageId > 0;
@@ -17240,6 +17253,114 @@ public class ChatActivity extends BaseFragment implements
         returnToMessageId = fromMessageId;
         returnToLoadIndex = loadIndex;
         needSelectFromMessageId = select;
+    }
+
+    private static class BackScrollPosition {
+        final int messageId;
+        final int loadIndex;
+        final int offset;
+        final int fromMessageId;
+
+        BackScrollPosition(int messageId, int loadIndex, int offset, int fromMessageId) {
+            this.messageId = messageId;
+            this.loadIndex = loadIndex;
+            this.offset = offset;
+            this.fromMessageId = fromMessageId;
+        }
+    }
+
+    private boolean isInTabletRightPanel() {
+        return getParentActivity() instanceof LaunchActivity && ((LaunchActivity) getParentActivity()).isTabletRightPanel(parentLayout);
+    }
+
+    // in tablet two-pane mode, fragments below this index are earlier right panel pages kept for back navigation
+    private int getTabletRightPanelPageStart() {
+        return isInTabletRightPanel() ? ((LaunchActivity) getParentActivity()).getRightPanelPageStart() : 0;
+    }
+
+    private BackScrollPosition getCurrentScrollPosition(int fromMessageId) {
+        if (chatListView == null || chatAdapter == null || chatAdapter.isFiltered) {
+            return null;
+        }
+        for (int i = 0, count = chatListView.getChildCount(); i < count; i++) {
+            final View child = chatListView.getChildAt(i);
+            MessageObject messageObject = null;
+            if (child instanceof ChatMessageCell) {
+                messageObject = ((ChatMessageCell) child).getMessageObject();
+            } else if (child instanceof ChatActionCell) {
+                messageObject = ((ChatActionCell) child).getMessageObject();
+            }
+            if (messageObject != null && messageObject.getId() != 0 && !messageObject.isSponsored()) {
+                return new BackScrollPosition(messageObject.getId(), messageObject.getDialogId() == mergeDialogId ? 1 : 0, getScrollingOffsetForView(child), fromMessageId);
+            }
+        }
+        return null;
+    }
+
+    // remembers the visible position before a jump inside the chat, so the back gesture can return to it
+    private void pushBackScrollPosition(int fromMessageId) {
+        if (!isInTabletRightPanel()) {
+            return;
+        }
+        final BackScrollPosition position = getCurrentScrollPosition(fromMessageId);
+        if (position == null) {
+            return;
+        }
+        if (!backScrollPositions.isEmpty()) {
+            final BackScrollPosition last = backScrollPositions.get(backScrollPositions.size() - 1);
+            if (last.messageId == position.messageId && last.offset == position.offset) {
+                return;
+            }
+        }
+        backScrollPositions.add(position);
+        if (backScrollPositions.size() > 50) {
+            backScrollPositions.remove(0);
+        }
+    }
+
+    private boolean hasBackScrollPosition() {
+        if (backScrollPositions.isEmpty() || !isInTabletRightPanel()) {
+            return false;
+        }
+        final BackScrollPosition current = getCurrentScrollPosition(0);
+        if (current == null) {
+            return false;
+        }
+        // positions the list is already at would make back do nothing
+        while (!backScrollPositions.isEmpty()) {
+            final BackScrollPosition last = backScrollPositions.get(backScrollPositions.size() - 1);
+            if (last.messageId != current.messageId || last.offset != current.offset) {
+                break;
+            }
+            backScrollPositions.remove(backScrollPositions.size() - 1);
+        }
+        return !backScrollPositions.isEmpty();
+    }
+
+    private void restoreBackScrollPosition() {
+        final BackScrollPosition position = backScrollPositions.remove(backScrollPositions.size() - 1);
+        if (postponedScrollToLastMessageQueryIndex > 0) {
+            // the jump being undone is still loading
+            if (progressDialog != null) {
+                progressDialog.dismiss();
+            }
+            postponedScrollCancelListener.onCancel(null);
+        }
+        returnToMessageId = 0;
+        removeSelectedMessageHighlight();
+        final MessageObject object = messagesDict[position.loadIndex].get(position.messageId);
+        final int index = object != null ? chatAdapter.getMessages().indexOf(object) : -1;
+        if (index >= 0) {
+            chatScrollHelper.cancel();
+            chatListView.stopScroll();
+            chatAdapter.updateRowsSafe();
+            chatLayoutManager.scrollToPositionWithOffset(chatAdapter.messagesStartRow + index, position.offset);
+            updateVisibleRows();
+            canShowPagedownButton = true;
+            updatePagedownButtonVisibility(true);
+        } else {
+            scrollToMessageId(position.messageId, 0, false, position.loadIndex, true, 0);
+        }
     }
 
     private void showPinnedProgress(boolean show) {
@@ -22290,7 +22411,17 @@ public class ChatActivity extends BaseFragment implements
             if (args != null && args.length > 0) {
                 long did = (Long) args[0];
                 if (did == dialog_id) {
-                    finishFragment();
+                    if (isInTabletRightPanel() && !isLastFragment()) {
+                        // an earlier right panel page, finishFragment() would close the top one instead
+                        removeSelfFromStack(true);
+                    } else {
+                        finishFragment();
+                    }
+                }
+            } else if (isInTabletRightPanel()) {
+                // earlier right panel pages stay for back navigation, only the current page closes
+                if (parentLayout.getFragmentStack().indexOf(this) >= getTabletRightPanelPageStart()) {
+                    removeSelfFromStack(true);
                 }
             } else {
                 if (AndroidUtilities.isTablet() && parentLayout != null && parentLayout.getFragmentStack().size() > 1) {
@@ -27329,6 +27460,13 @@ public class ChatActivity extends BaseFragment implements
     public void onBecomeFullyVisible() {
         isFullyVisible = true;
         super.onBecomeFullyVisible();
+        if (chatMode == 0 && !paused && isInTabletRightPanel()) {
+            // the chat this one replaced or was revealed from (back navigation) gets paused after our onResume()
+            getNotificationsController().setOpenedDialogId(dialog_id, getTopicId());
+            if (!isComments) {
+                getNotificationCenter().postNotificationName(NotificationCenter.openedChatChanged, dialog_id, getTopicId(), false);
+            }
+        }
         if (showCloseChatDialogLater) {
             showDialog(closeChatDialog);
         }
@@ -27608,7 +27746,7 @@ public class ChatActivity extends BaseFragment implements
             }
 
             if (!backward && parentLayout != null && needRemovePreviousSameChatActivity) {
-                for (int a = 0, N = parentLayout.getFragmentStack().size() - 1; a < N; a++) {
+                for (int a = getTabletRightPanelPageStart(), N = parentLayout.getFragmentStack().size() - 1; a < N; a++) {
                     BaseFragment fragment = parentLayout.getFragmentStack().get(a);
                     if (fragment != this && fragment instanceof ChatActivity) {
                         ChatActivity chatActivity = (ChatActivity) fragment;
@@ -31642,7 +31780,7 @@ public class ChatActivity extends BaseFragment implements
                                         new DeleteMessagesBottomSheet(this, currentChat,
                                                 arrMessages, actionParticipants, participants,
                                                 mergeDialogId, (int) getTopicId(),
-                                                chatMode, true, () -> {}).show();
+                                                chatMode, true, () -> {}).confirm();
                                     });
                                     closeMenu();
                                 })
@@ -34200,7 +34338,7 @@ public class ChatActivity extends BaseFragment implements
                     }, 550);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
                 break;
             }
             case OPTION_UNPIN: {
@@ -34465,7 +34603,7 @@ public class ChatActivity extends BaseFragment implements
                     }, 500);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
                 break;
             }
             case OPTION_VIEW_REPLIES_OR_THREAD: {
@@ -34532,7 +34670,8 @@ public class ChatActivity extends BaseFragment implements
                             send.run();
                         })
                         .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-                        .show();
+                        .create();
+                    scheduleNowDialog.confirm();
                     return;
                 } else {
                     send.run();
@@ -34906,7 +35045,7 @@ public class ChatActivity extends BaseFragment implements
                     }
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Continue), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return true;
         }
@@ -34978,6 +35117,9 @@ public class ChatActivity extends BaseFragment implements
         } else if (isInPollAddOptionMode()) {
             if (invoked) pollAddOptionModeClose();
             return false;
+        } else if (hasBackScrollPosition()) {
+            if (invoked) restoreBackScrollPosition();
+            return false;
         }
         if (invoked) {
             if (backToPreviousFragment != null) {
@@ -34992,16 +35134,15 @@ public class ChatActivity extends BaseFragment implements
     }
 
     private void showQuickRepliesRemoveAlert() {
-        showDialog(
-            new AlertDialog.Builder(getContext(), getResourceProvider())
-                .setTitle(LocaleController.getString(R.string.BusinessRepliesRemoveTitle))
-                .setMessage(LocaleController.getString(R.string.BusinessRepliesRemoveMessage))
-                .setPositiveButton(LocaleController.getString(R.string.Remove), (di, w) -> {
-                    finishFragment();
-                })
-                .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-                .create()
-        );
+        new AlertDialog.Builder(getContext(), getResourceProvider())
+            .setTitle(LocaleController.getString(R.string.BusinessRepliesRemoveTitle))
+            .setMessage(LocaleController.getString(R.string.BusinessRepliesRemoveMessage))
+            .setPositiveButton(LocaleController.getString(R.string.Remove), (di, w) -> {
+                finishFragment();
+            })
+            .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+            .create()
+            .confirm();
     }
 
     private void showBusinessLinksDiscardAlert(Runnable onDiscard) {
@@ -35013,7 +35154,7 @@ public class ChatActivity extends BaseFragment implements
                 })
                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                 .create();
-        showDialog(dialog);
+        dialog.confirm();
         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -37476,7 +37617,7 @@ public class ChatActivity extends BaseFragment implements
                                     })
                                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                                     .create();
-                            showDialog(d);
+                            d.confirm();
                             TextView button = (TextView) d.getButton(DialogInterface.BUTTON_POSITIVE);
                             if (button != null) {
                                 button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -40408,12 +40549,13 @@ public class ChatActivity extends BaseFragment implements
 
                         final AlertDialog[] dialog = new AlertDialog[1];
 
-                        dialog[0] = AlertsCreator.showSimpleConfirmAlert(ChatActivity.this,
+                        // pays or charges Stars / TON: keep asking (showSimpleConfirmAlert no longer shows the dialog)
+                        dialog[0] = AlertsCreator.createSimpleConfirmAlert(getContext(), getResourceProvider(),
                             LocaleController.getString(R.string.SuggestedPostAcceptTitle), ssb,
                             LocaleController.getString(message.suggested_post.schedule_date == 0 ?
                                 R.string.Next :
                                 R.string.SuggestedPostPublish
-                            ), false,
+                            ),
                         () -> {
                             if (message.suggested_post.schedule_date == 0) {
                                 dialog[0].setOnDismissListener(null);
@@ -40432,6 +40574,7 @@ public class ChatActivity extends BaseFragment implements
                                 );
                             }
                         });
+                        showDialog(dialog[0]);
 
                         dialog[0].setOnDismissListener(onDismiss);
 
@@ -42516,7 +42659,12 @@ public class ChatActivity extends BaseFragment implements
                             }
                         });
                     }
-                    showDialog(alert.create());
+                    if (needsVerification) {
+                        // viewing needs age verification (or isn't possible at all): keep asking
+                        showDialog(alert.create());
+                    } else {
+                        alert.create().confirm();
+                    }
                 });
                 return;
             }
@@ -45800,7 +45948,7 @@ public class ChatActivity extends BaseFragment implements
                             new DeleteMessagesBottomSheet(this, currentChat,
                                 arrMessages, actionParticipants, participants,
                                 mergeDialogId, (int) getTopicId(),
-                                chatMode, true, () -> {}).show();
+                                chatMode, true, () -> {}).confirm();
                         });
                         closeMenu();
                     }), LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));

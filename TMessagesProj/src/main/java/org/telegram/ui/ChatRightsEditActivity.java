@@ -994,19 +994,10 @@ public class ChatRightsEditActivity extends BaseFragment implements Notification
                     final long newGuardBotId = newValue ? currentUser.id : 0;
 
                     AlertsCreator.showSimpleConfirmAlert(this, title, message, button, false, () -> {
-                        final long currentGuardBotId = chatInfo != null ? chatInfo.guard_bot_id : 0;
-                        final TLRPC.User currentGuardBot = currentGuardBotId != 0 ? getMessagesController().getUser(currentGuardBotId) : null;
-                        if (currentGuardBot != null && newGuardBotId != 0 && currentGuardBot.id != newGuardBotId) {
-                            GuardBotReplaceSheet.show(getContext(), resourceProvider, currentAccount, currentGuardBot, currentUser, () -> {
-                                guardBotIdToSet = newGuardBotId;
-                                hasGuardBotToSet = true;
-                                checkGuardBotRow();
-                            });
-                        } else {
-                            guardBotIdToSet = newGuardBotId;
-                            hasGuardBotToSet = true;
-                            checkGuardBotRow();
-                        }
+                        // replacing the current guard bot no longer asks first (was GuardBotReplaceSheet)
+                        guardBotIdToSet = newGuardBotId;
+                        hasGuardBotToSet = true;
+                        checkGuardBotRow();
                     });
                 } else if (position == manageWelcomeRow) {
                     value = adminRights.manage_welcome_messages = !adminRights.manage_welcome_messages;
@@ -1159,7 +1150,7 @@ public class ChatRightsEditActivity extends BaseFragment implements Notification
                             presentFragment(fragment);
                         });
                         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                        showDialog(builder.create());
+                        builder.create().confirm();
                     }
                 } else if ("PASSWORD_MISSING".equals(error.text) || error.text.startsWith("PASSWORD_TOO_FRESH_") || error.text.startsWith("SESSION_TOO_FRESH_")) {
                     if (passwordFragment != null) {
@@ -1686,7 +1677,7 @@ public class ChatRightsEditActivity extends BaseFragment implements Notification
                     });
                 }
             });
-            showDialog(builder.create());
+            builder.create().confirm();
             finishFragment = false;
         }
         if (finishFragment) {
@@ -1743,7 +1734,7 @@ public class ChatRightsEditActivity extends BaseFragment implements Notification
                 builder.setMessage(AndroidUtilities.replaceTags(formatString("UserRestrictionsApplyChangesText", R.string.UserRestrictionsApplyChangesText, chat.title)));
                 builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> onDonePressed());
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

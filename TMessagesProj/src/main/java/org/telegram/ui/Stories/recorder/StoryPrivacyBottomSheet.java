@@ -777,7 +777,7 @@ public class StoryPrivacyBottomSheet extends BottomSheet implements Notification
                             searchField.scrollToBottom();
                         })
                         .setNegativeButton("Cancel", null)
-                        .show();
+                        .create().confirm();
                 }
             } else {
                 selectedUsersByGroup.put(id, groupUsers);
@@ -2352,7 +2352,7 @@ public class StoryPrivacyBottomSheet extends BottomSheet implements Notification
                     done(privacy, loaded, true);
                 })
                 .setNegativeButton(getString(R.string.Cancel), null)
-                .show();
+                .create().confirm();
             return;
         }
         View[] pages = viewPager.getViewPages();

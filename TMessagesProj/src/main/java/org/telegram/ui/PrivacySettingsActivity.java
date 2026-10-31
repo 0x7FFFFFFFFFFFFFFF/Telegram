@@ -526,7 +526,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                     getContactsController().deleteAllContacts(() -> progressDialog.dismiss());
                 });
                 AlertDialog alertDialog = builder.create();
-                showDialog(alertDialog);
+                alertDialog.confirm();
                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -550,7 +550,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                     });
                     builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
                     AlertDialog alertDialog = builder.create();
-                    showDialog(alertDialog);
+                    alertDialog.confirm();
                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -636,9 +636,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                         BulletinFactory.of(PrivacySettingsActivity.this).createSimpleBulletin(R.raw.chats_infotip, text).show();
                     });
                     builder1.setNegativeButton(getString("Cancel", R.string.Cancel), null);
-                    showDialog(builder1.create());
                     AlertDialog alertDialog = builder1.create();
-                    showDialog(alertDialog);
+                    alertDialog.confirm();
                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -646,9 +645,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 });
                 builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
 
-                showDialog(builder.create());
                 AlertDialog alertDialog = builder.create();
-                showDialog(alertDialog);
+                alertDialog.confirm();
                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

@@ -971,7 +971,7 @@ public class StickersActivity extends BaseFragment implements NotificationCenter
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
 
                     final AlertDialog dialog = builder.create();
-                    showDialog(dialog);
+                    dialog.confirm();
                     if (which == MENU_DELETE) {
                         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                         if (button != null) {

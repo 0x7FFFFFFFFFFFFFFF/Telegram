@@ -828,7 +828,7 @@ public class FilterCreateActivity extends BaseFragment {
                 }));
             });
             AlertDialog alertDialog = builder.create();
-            showDialog(alertDialog);
+            alertDialog.confirm();
             TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (button != null) {
                 button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -977,9 +977,12 @@ public class FilterCreateActivity extends BaseFragment {
         }
     }
 
+    // set while leaving saves: canBeginSlide() can ask twice in one swipe, and the save only finishes after the server answers
+    private boolean savingOnLeave;
+
     private boolean checkDiscard(boolean invoked) {
         if (doneItem.getAlpha() == 1.0f) {
-            if (invoked) {
+            if (invoked && !savingOnLeave) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                 if (creatingNew) {
                     builder.setTitle(LocaleController.getString(R.string.FilterDiscardNewTitle));
@@ -991,7 +994,8 @@ public class FilterCreateActivity extends BaseFragment {
                     builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 }
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                savingOnLeave = true;
+                builder.create().confirm();
             }
             return false;
         }
@@ -1035,7 +1039,7 @@ public class FilterCreateActivity extends BaseFragment {
             }
         });
         AlertDialog alertDialog = builder.create();
-        showDialog(alertDialog);
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -1048,6 +1052,7 @@ public class FilterCreateActivity extends BaseFragment {
             saveHintView = null;
         }
         save(true, () -> {
+            savingOnLeave = false;
             if (doNotCloseWhenSave) {
                 doNotCloseWhenSave = false;
                 final Paint.FontMetricsInt fontMetricsInt = actionBar.getTitleFontMetricsInt();

@@ -376,7 +376,7 @@ public class WebBrowserSettings extends UniversalFragment implements Notificatio
                 })
                 .setNegativeButton(getString(R.string.Cancel), null)
                 .makeRed(AlertDialog.BUTTON_POSITIVE)
-                .show();
+                .create().confirm();
         } else if (item.id == BUTTON_CLEAR_COOKIES) {
             new AlertDialog.Builder(getContext(), getResourceProvider())
                 .setTitle(getString(R.string.BrowserSettingsCookiesClear))
@@ -397,7 +397,7 @@ public class WebBrowserSettings extends UniversalFragment implements Notificatio
                 })
                 .setNegativeButton(getString(R.string.Cancel), null)
                 .makeRed(AlertDialog.BUTTON_POSITIVE)
-                .show();
+                .create().confirm();
         } else if (item.id == BUTTON_CLEAR_HISTORY) {
             long firstDate = Long.MAX_VALUE;
             ArrayList<BrowserHistory.Entry> entries = BrowserHistory.getHistory();
@@ -414,7 +414,7 @@ public class WebBrowserSettings extends UniversalFragment implements Notificatio
                 })
                 .setNegativeButton(getString(R.string.Cancel), null)
                 .makeRed(AlertDialog.BUTTON_POSITIVE)
-                .show();
+                .create().confirm();
         } else if (item.id == BUTTON_OPEN_HISTORY) {
             final HistoryFragment[] fragment = new HistoryFragment[] { null };
             fragment[0] = new HistoryFragment(null, e -> {
@@ -437,7 +437,7 @@ public class WebBrowserSettings extends UniversalFragment implements Notificatio
                 })
                 .setNegativeButton(getString(R.string.Cancel), null)
                 .makeRed(AlertDialog.BUTTON_POSITIVE)
-                .show();
+                .create().confirm();
         } else if (item.instanceOf(WebsiteView.Factory.class)) {
             final WebsiteView websiteView = (WebsiteView) view;
             final String domain = websiteView.domain;

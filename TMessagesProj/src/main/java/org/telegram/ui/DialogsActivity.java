@@ -3588,7 +3588,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                             getMessagesStorage().deleteDialogFilter(dialogFilter);
                         });
                         AlertDialog alertDialog = builder.create();
-                        showDialog(alertDialog);
+                        alertDialog.confirm();
                         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                         if (button != null) {
                             button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -8071,15 +8071,17 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                     if (getParentActivity() instanceof LaunchActivity) {
                         LaunchActivity launchActivity = (LaunchActivity) getParentActivity();
                         List<BaseFragment> rightFragments = launchActivity.getRightActionBarLayout().getFragmentStack();
+                        // fragments below the current page are the right panel back history
+                        final int pageStart = launchActivity.getRightPanelPageStart();
                         if (!rightFragments.isEmpty()) {
-                            if (rightFragments.size() == 1 && rightFragments.get(rightFragments.size() - 1) instanceof ChatActivity) {
+                            if (rightFragments.size() - pageStart == 1 && rightFragments.get(rightFragments.size() - 1) instanceof ChatActivity) {
                                 ((ChatActivity) rightFragments.get(rightFragments.size() - 1)).onPageDownClicked();
-                            } else if (rightFragments.size() == 2) {
+                            } else if (rightFragments.size() - pageStart == 2) {
                                 launchActivity.getRightActionBarLayout().closeLastFragment();
                             } else if (getParentActivity() instanceof LaunchActivity) {
-                                BaseFragment first = rightFragments.get(0);
-                                rightFragments.clear();
-                                rightFragments.add(first);
+                                while (rightFragments.size() > pageStart + 1) {
+                                    rightFragments.remove(rightFragments.size() - 1);
+                                }
                                 launchActivity.getRightActionBarLayout().rebuildFragments(INavigationLayout.REBUILD_FLAG_REBUILD_LAST);
                             }
                         }
@@ -8326,7 +8328,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 builder.setPositiveButton(LocaleController.getString(R.string.ClearSearchRemove), (dialogInterface, i) -> searchViewPager.dialogsSearchAdapter.removeRecentSearch(did));
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                 AlertDialog alertDialog = builder.create();
-                showDialog(alertDialog);
+                alertDialog.confirm();
                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -9419,7 +9421,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                             hideActionMode(false);
                         });
                         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                        showDialog(builder.create());
+                        builder.create().confirm();
                     } else {
                          AlertsCreator.createClearOrDeleteDialogAlert(DialogsActivity.this, action == clear, chat, user, DialogObject.isEncryptedDialog(dialog.id), action == delete, false, false, (param) -> {
                             hideActionMode(false);
@@ -11842,10 +11844,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
             builder.setMessage(AndroidUtilities.replaceTags(message));
             builder.setPositiveButton(buttonText, (dialogInterface, i) -> didSelectResult(dialogId, topicId, false, false, topicsFragment));
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-            Dialog dialog = builder.create();
-            if (showDialog(dialog) == null) {
-                dialog.show();
-            }
+            builder.create().confirm();
         } else if (initialDialogsType == DIALOGS_TYPE_BOT_REQUEST_PEER) {
             Runnable send = () -> {
                 if (delegate != null) {
@@ -13146,7 +13145,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 builder.setPositiveButton(LocaleController.getString(R.string.StickersRemove), (dialogInterface, i) -> getMediaDataController().removePeer(did));
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                 AlertDialog dialog = builder.create();
-                showDialog(dialog);
+                dialog.confirm();
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -13175,7 +13174,7 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                 }
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                 AlertDialog dialog = builder.create();
-                showDialog(dialog);
+                dialog.confirm();
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -13274,7 +13273,8 @@ public class DialogsActivity extends BaseFragment implements NotificationCenter.
                         getMediaDataController().removeWebapp(user.id);
                     })
                     .makeRed(DialogInterface.BUTTON_POSITIVE)
-                    .show();
+                    .create()
+                    .confirm();
             }
             return false;
         });

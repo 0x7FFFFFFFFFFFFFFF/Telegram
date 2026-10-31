@@ -269,7 +269,7 @@ public class AIEditorAlert extends BottomSheetWithRecyclerListView implements No
                                 });
                             })
                             .makeRed(AlertDialog.BUTTON_POSITIVE)
-                            .show();
+                            .create().confirm();
                     })
                     .show();
                 return true;
@@ -2048,7 +2048,7 @@ public class AIEditorAlert extends BottomSheetWithRecyclerListView implements No
                             });
                         })
                         .makeRed(AlertDialog.BUTTON_POSITIVE)
-                        .show();
+                        .create().confirm();
                 }
             });
 

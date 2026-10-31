@@ -1154,11 +1154,12 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 			builder.setTitle(getString(R.string.DeleteCalls));
 			builder.setMessage(getString(R.string.DeleteSelectedCallsText));
 		}
-		final boolean[] checks = new boolean[]{false};
+		// deleted calls are removed for everyone by default
+		final boolean[] checks = new boolean[]{true};
 		FrameLayout frameLayout = new FrameLayout(getParentActivity());
 		CheckBoxCell cell = new CheckBoxCell(getParentActivity(), 1);
 		cell.setBackground(Theme.getSelectorDrawable(false));
-		cell.setText(getString(R.string.DeleteCallsForEveryone), "", false, false);
+		cell.setText(getString(R.string.DeleteCallsForEveryone), "", true, false);
 		cell.setPadding(LocaleController.isRTL ? AndroidUtilities.dp(8) : 0, 0, LocaleController.isRTL ? 0 : AndroidUtilities.dp(8), 0);
 		frameLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 8, 0, 8, 0));
 		cell.setOnClickListener(v -> {
@@ -1182,7 +1183,7 @@ public class CallLogActivity extends BaseFragment implements NotificationCenter.
 		});
 		builder.setNegativeButton(getString(R.string.Cancel), null);
 		AlertDialog alertDialog = builder.create();
-		showDialog(alertDialog);
+		alertDialog.confirm();
 		TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
 		if (button != null) {
 			button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

@@ -4400,7 +4400,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                     }
                 })
                 .setNegativeButton(getString("Cancel", R.string.Cancel), null)
-                .show();
+                .create().confirm();
     }
 
     @Override
@@ -7025,7 +7025,7 @@ public class ChatAttachAlert extends BottomSheet implements NotificationCenter.N
                         confirmationAlertShown = false;
                     })
                     .create();
-            dialog.show();
+            dialog.confirm();
             TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (button != null) {
                 button.setTextColor(getThemedColor(Theme.key_text_RedBold));

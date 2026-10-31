@@ -237,7 +237,7 @@ public class ChatAttachAlertRichLayout extends ChatAttachAlert.AttachAlertLayout
                     parentAlert.dismiss();
                 })
                 .makeRed(AlertDialog.BUTTON_NEGATIVE)
-                .show();
+                .create().confirm();
             return false;
         }
         return true;

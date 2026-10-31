@@ -122,7 +122,7 @@ public class CreateRtmpStreamBottomSheet extends BottomSheetWithRecyclerListView
                         })
                         .setNegativeButton(getString(R.string.Cancel), null)
                         .makeRed(AlertDialog.BUTTON_POSITIVE)
-                        .show();
+                        .create().confirm();
                 });
 
                 containerView.addView(revokeBtn, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM, 16, 0, 16, 12));
@@ -209,7 +209,7 @@ public class CreateRtmpStreamBottomSheet extends BottomSheetWithRecyclerListView
                     })
                     .setNegativeButton(getString(R.string.Cancel), null)
                     .makeRed(AlertDialog.BUTTON_POSITIVE)
-                    .show();
+                    .create().confirm();
             });
             containerView.addView(revokeBtn, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM, 16, 0, 16, 12));
         }

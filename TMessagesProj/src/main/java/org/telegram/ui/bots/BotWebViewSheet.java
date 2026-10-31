@@ -37,7 +37,6 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -1992,7 +1991,7 @@ public class BotWebViewSheet extends Dialog implements NotificationCenter.Notifi
                     }
                 })
                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-                .show();
+                .create().confirm();
     }
 
     private int getColor(int key) {
@@ -2092,9 +2091,7 @@ public class BotWebViewSheet extends Dialog implements NotificationCenter.Notifi
                     .setPositiveButton(LocaleController.getString(R.string.BotWebViewCloseAnyway), (dialog2, which) -> dismiss())
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                     .create();
-            dialog.show();
-            TextView textView = (TextView) dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            textView.setTextColor(getColor(Theme.key_text_RedBold));
+            dialog.confirm();
             return false;
         } else {
             dismiss();

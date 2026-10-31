@@ -2088,7 +2088,7 @@ public class TopicsTabsView extends FrameLayout implements NotificationCenter.No
             dialog.dismiss();
         });
         AlertDialog alertDialog = builder.create();
-        alertDialog.show();
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

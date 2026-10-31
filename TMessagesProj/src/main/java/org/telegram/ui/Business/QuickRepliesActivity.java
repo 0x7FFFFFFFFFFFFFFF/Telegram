@@ -116,17 +116,16 @@ public class QuickRepliesActivity extends BaseFragment implements NotificationCe
                         QuickRepliesController.getInstance(currentAccount).renameReply(replyId, name);
                     });
                 } else if (id == 2) {
-                    showDialog(
-                        new AlertDialog.Builder(getContext(), getResourceProvider())
-                            .setTitle(formatPluralString("BusinessRepliesDeleteTitle", selected.size()))
-                            .setMessage(formatPluralString("BusinessRepliesDeleteMessage", selected.size()))
-                            .setPositiveButton(getString(R.string.Remove), (di, w) -> {
-                                QuickRepliesController.getInstance(currentAccount).deleteReplies(selected);
-                                clearSelection();
-                            })
-                            .setNegativeButton(getString(R.string.Cancel), null)
-                            .create()
-                    );
+                    new AlertDialog.Builder(getContext(), getResourceProvider())
+                        .setTitle(formatPluralString("BusinessRepliesDeleteTitle", selected.size()))
+                        .setMessage(formatPluralString("BusinessRepliesDeleteMessage", selected.size()))
+                        .setPositiveButton(getString(R.string.Remove), (di, w) -> {
+                            QuickRepliesController.getInstance(currentAccount).deleteReplies(selected);
+                            clearSelection();
+                        })
+                        .setNegativeButton(getString(R.string.Cancel), null)
+                        .create()
+                        .confirm();
                 }
             }
         });

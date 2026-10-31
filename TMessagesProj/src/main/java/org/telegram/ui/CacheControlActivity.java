@@ -1388,7 +1388,7 @@ public class CacheControlActivity extends BaseFragment implements NotificationCe
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         AlertDialog dialog = builder.create();
-        showDialog(dialog);
+        dialog.confirm();
         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -1604,7 +1604,11 @@ public class CacheControlActivity extends BaseFragment implements NotificationCe
             }
         });
         AlertDialog alertDialog = builder.create();
-        showDialog(alertDialog);
+        if (fullReset) {
+            showDialog(alertDialog);
+        } else {
+            alertDialog.confirm();
+        }
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -1948,7 +1952,7 @@ public class CacheControlActivity extends BaseFragment implements NotificationCe
                     .setPositiveButton(textView.getText(), (di, v) -> doClearCache())
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                     .create();
-                showDialog(dialog);
+                dialog.confirm();
                 View clearButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 if (clearButton instanceof TextView) {
                     ((TextView) clearButton).setTextColor(Theme.getColor(Theme.key_text_RedRegular));

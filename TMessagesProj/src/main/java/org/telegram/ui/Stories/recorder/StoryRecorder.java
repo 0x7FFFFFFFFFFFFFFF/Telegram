@@ -7124,7 +7124,12 @@ public class StoryRecorder implements NotificationCenter.NotificationCenterDeleg
         });
         builder.setNegativeButton(getString(R.string.Cancel), null);
         AlertDialog dialog = builder.create();
-        dialog.show();
+        if (outputEntry != null && !outputEntry.isEdit && !outputEntry.isShare) {
+            // also offers saving or keeping the draft: a real choice, keep asking
+            dialog.show();
+        } else {
+            dialog.confirm();
+        }
         View positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (positiveButton instanceof TextView) {
             ((TextView) positiveButton).setTextColor(Theme.getColor(Theme.key_text_RedBold, resourcesProvider));

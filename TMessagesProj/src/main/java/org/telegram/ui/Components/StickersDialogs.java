@@ -168,7 +168,7 @@ public class StickersDialogs {
                 })
                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                 .create();
-        alertDialog.show();
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(getThemedColor(Theme.key_text_RedBold, resourcesProvider));

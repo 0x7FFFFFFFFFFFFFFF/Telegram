@@ -2608,7 +2608,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     });
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                     AlertDialog dialog = builder.create();
-                    showDialog(dialog);
+                    dialog.confirm();
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -2623,7 +2623,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         return;
                     }
 
-                    AlertsCreator.showDisableSharingInfo(context, resourcesProvider, () -> toggleNoForwards(true));
+                    toggleNoForwards(true);
                 } else if (id == disable_no_forwards) {
                     toggleNoForwards(false);
                 } else if (id == delete_topic) {
@@ -2654,7 +2654,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     });
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), (dialog, which) -> dialog.dismiss());
                     AlertDialog alertDialog = builder.create();
-                    alertDialog.show();
+                    alertDialog.confirm();
                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -2736,7 +2736,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                                 getMessagesController().addUserToChat(-did, user, 0, null, chatActivity, true, null, null);
                                 presentFragment(chatActivity, true);
                             });
-                            showDialog(builder.create());
+                            builder.create().confirm();
                         }
                         return true;
                     });
@@ -2800,7 +2800,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         getSecretChatHelper().startSecretChat(getParentActivity(), getMessagesController().getUser(userId));
                     });
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                    showDialog(builder.create());
+                    builder.create().confirm();
                 } else if (id == bot_privacy) {
                     BotWebViewAttachedSheet.openPrivacy(currentAccount, userId);
                 } else if (id == gallery_menu_save) {
@@ -2991,7 +2991,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     });
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                     AlertDialog alertDialog = builder.create();
-                    showDialog(alertDialog);
+                    alertDialog.confirm();
                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -4387,12 +4387,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 args.putString("last_name_card", vcardLastName);
                 openAddToContact(user, args);
             } else if (position == deleteReactionRow) {
-                final AlertDialog dialog = AlertsCreator.showAlertWithCheckbox(
-                    getContext(),
-                    LocaleController.getString(R.string.DeleteReaction),
-                    LocaleController.getString(R.string.DeleteAlertReaction),
-                    getString(R.string.DeleteAlertReactionAll),
-                    LocaleController.getString(R.string.Delete), (checked) -> {
+                // no confirmation: deletes with the alert's default, "delete all reactions" unchecked
+                final Utilities.Callback<Boolean> deleteReaction = (checked) -> {
                         final long participantDid;
                         if (userId != 0) {
                             participantDid = userId;
@@ -4417,13 +4413,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         layout.setAnimation(R.raw.chats_infotip);
                         layout.textView.setText(LocaleController.getString(R.string.ReactionDeleteSent));
                         BulletinFactory.of(ProfileActivity.this).create(layout, Bulletin.DURATION_SHORT).show();
-                    }, resourcesProvider
-                );
-
-                TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
-                if (button != null) {
-                    button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
-                }
+                };
+                deleteReaction.run(false);
             } else if (position == reportReactionRow) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity(), resourcesProvider);
                 builder.setTitle(LocaleController.getString(R.string.ReportReaction2));
@@ -4466,7 +4457,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), (dialog, which) -> {
                     dialog.dismiss();
                 });
-                AlertDialog dialog = builder.show();
+                AlertDialog dialog = builder.create();
+                dialog.confirm();
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -4576,7 +4568,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
             } else if (position == devicesRow) {
                 presentFragment(new SessionsActivity(0));
             } else if (position == questionRow) {
-                showDialog(AlertsCreator.createSupportAlert(ProfileActivity.this, resourcesProvider));
+                final AlertDialog supportAlert = AlertsCreator.createSupportAlert(ProfileActivity.this, resourcesProvider);
+                if (supportAlert != null) {
+                    supportAlert.confirm();
+                }
             } else if (position == faqRow) {
                 Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));
             } else if (position == policyRow) {
@@ -5143,7 +5138,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 builder.setPositiveButton(LocaleController.getString(R.string.ClearButton), (dialogInterface, i) -> searchAdapter.clearRecent());
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                 AlertDialog dialog = builder.create();
-                showDialog(dialog);
+                dialog.confirm();
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -6178,7 +6173,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     });
                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                     AlertDialog dialog = builder.create();
-                    showDialog(dialog);
+                    dialog.confirm();
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -7209,14 +7204,13 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     .addIf(canEditAdmin, R.drawable.msg_admins, editingAdmin ? LocaleController.getString(R.string.EditAdminRights) : LocaleController.getString(R.string.SetAsAdmin), () -> openRightsEdit.run(0))
                     .addIf(canRestrict, R.drawable.msg_permissions, LocaleController.getString(R.string.ChangePermissions), () -> {
                         if (channelParticipant instanceof TLRPC.TL_channelParticipantAdmin || participant instanceof TLRPC.TL_chatParticipantAdmin) {
-                            showDialog(
-                                    new AlertDialog.Builder(getParentActivity(), resourcesProvider)
-                                            .setTitle(LocaleController.getString(R.string.AppName))
-                                            .setMessage(formatString(R.string.AdminWillBeRemoved, ContactsController.formatName(user.first_name, user.last_name)))
-                                            .setPositiveButton(LocaleController.getString(R.string.OK), (dialog, which) -> openRightsEdit.run(1))
-                                            .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-                                            .create()
-                            );
+                            new AlertDialog.Builder(getParentActivity(), resourcesProvider)
+                                    .setTitle(LocaleController.getString(R.string.AppName))
+                                    .setMessage(formatString(R.string.AdminWillBeRemoved, ContactsController.formatName(user.first_name, user.last_name)))
+                                    .setPositiveButton(LocaleController.getString(R.string.OK), (dialog, which) -> openRightsEdit.run(1))
+                                    .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
+                                    .create()
+                                    .confirm();
                         } else {
                             openRightsEdit.run(1);
                         }
@@ -14852,7 +14846,12 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     new SearchResult(405, getString(R.string.ShowTranslateButton), getString(R.string.Language), R.drawable.msg2_language, () -> f.presentFragment(new LanguageSelectActivity())).withLink("tg://settings/language/show-button"),
                     MessagesController.getInstance(currentAccount).getTranslateController().isContextTranslateEnabled() ? new SearchResult(406, getString(R.string.DoNotTranslate), getString(R.string.Language), R.drawable.msg2_language, () -> f.presentFragment(new LanguageSelectActivity())).withLink("tg://settings/language/do-not-translate") : null,
 
-                    new SearchResult(402, getString(R.string.AskAQuestion), getString(R.string.SettingsHelp), R.drawable.msg2_help, () -> f.showDialog(AlertsCreator.createSupportAlert(f, null))).withLink("tg://settings/ask-question"),
+                    new SearchResult(402, getString(R.string.AskAQuestion), getString(R.string.SettingsHelp), R.drawable.msg2_help, () -> {
+                        final AlertDialog supportAlert = AlertsCreator.createSupportAlert(f, null);
+                        if (supportAlert != null) {
+                            supportAlert.confirm();
+                        }
+                    }).withLink("tg://settings/ask-question"),
                     new SearchResult(403, getString(R.string.TelegramFAQ), getString(R.string.SettingsHelp), R.drawable.msg2_help, () -> Browser.openUrl(f.getParentActivity(), getString(R.string.TelegramFaqUrl))).withLink("tg://settings/faq"),
                     new SearchResult(404, getString(R.string.PrivacyPolicy), getString(R.string.SettingsHelp), R.drawable.msg2_help, () -> Browser.openUrl(f.getParentActivity(), getString(R.string.PrivacyPolicyUrl))).withLink("tg://settings/privacy-policy"),
             };
@@ -16354,7 +16353,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 })
                 .setNegativeButton(getString(R.string.Cancel), null)
                 .makeRed(AlertDialog.BUTTON_POSITIVE)
-                .show();
+                .create()
+                .confirm();
         });
         o.show();
         return true;
@@ -16442,7 +16442,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     getMessagesStorage().updateUserInfo(userFull, false);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             });
         } else if (position == bizLocationRow) {
             itemOptions.add(R.drawable.msg_edit, getString(R.string.ProfileLocationEdit), () -> {
@@ -16470,7 +16470,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     getMessagesStorage().updateUserInfo(userFull, false);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             });
         } else if (position == usernameRow) {
             itemOptions.add(R.drawable.msg_edit, getString(R.string.ProfileUsernameEdit), () -> {
@@ -16557,7 +16557,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     getMessagesStorage().updateUserInfo(userFull, false);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             });
         } else if (position == channelRow) {
             TLRPC.Chat channel = getMessagesController().getChat(userFull.personal_channel_id);
@@ -16592,7 +16592,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     getMessagesStorage().updateUserInfo(userFull, false);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             });
         }
 

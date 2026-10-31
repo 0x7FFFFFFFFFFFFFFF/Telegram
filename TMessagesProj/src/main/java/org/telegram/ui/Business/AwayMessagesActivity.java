@@ -257,7 +257,7 @@ public class AwayMessagesActivity extends BaseFragment implements NotificationCe
                 builder.setMessage(LocaleController.getString(R.string.BusinessAwayUnsavedChanges));
                 builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

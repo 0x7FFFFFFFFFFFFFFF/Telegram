@@ -3307,7 +3307,9 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                                     }
                                 });
                             }
-                            if (profileActivity != null && profileActivity.getContext() != null) {
+                            if (!needsVerification) {
+                                alert.create().confirm();
+                            } else if (profileActivity != null && profileActivity.getContext() != null) {
                                 profileActivity.showDialog(alert.create());
                             } else {
                                 alert.show();
@@ -3492,7 +3494,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                                         }, 500);
                                     });
                                     builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                                    builder.show();
+                                    builder.create().confirm();
                                 });
                             }
                         }
@@ -5219,7 +5221,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                                 dialog.dismiss();
                             });
                             AlertDialog dialog = builder.create();
-                            dialog.show();
+                            dialog.confirm();
                             dialog.redPositive();
                         }
                     } else {
@@ -5243,7 +5245,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                                 dialog.dismiss();
                             });
                             AlertDialog dialog = builder.create();
-                            dialog.show();
+                            dialog.confirm();
                             dialog.redPositive();
                         }
                     }
@@ -5291,7 +5293,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                     })
                     .setNegativeButton(getString(R.string.Cancel), null)
                     .create();
-                profileActivity.showDialog(dialog);
+                dialog.confirm();
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -7703,7 +7705,7 @@ public class SharedMediaLayout extends FrameLayout implements NotificationCenter
                     dialog.dismiss();
                 });
                 AlertDialog dialog = builder.create();
-                dialog.show();
+                dialog.confirm();
                 dialog.redPositive();
             });
 

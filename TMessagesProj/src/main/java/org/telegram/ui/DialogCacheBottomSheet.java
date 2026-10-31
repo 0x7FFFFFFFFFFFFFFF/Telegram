@@ -313,7 +313,7 @@ public class DialogCacheBottomSheet extends BottomSheetWithRecyclerListView {
                 cacheDelegate.cleanupDialogFiles(entities, clearViewData, cacheModel);
             });
             AlertDialog alertDialog = builder.create();
-            alertDialog.show();
+            alertDialog.confirm();
             alertDialog.redPositive();
         });
         if (circleDiagramView != null) {

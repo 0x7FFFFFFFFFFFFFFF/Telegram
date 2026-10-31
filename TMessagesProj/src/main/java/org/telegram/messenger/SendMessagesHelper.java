@@ -4191,7 +4191,7 @@ public class SendMessagesHelper extends BaseController implements NotificationCe
                             parentFragment.presentFragment(fragment);
                         });
                         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                        parentFragment.showDialog(builder.create());
+                        builder.create().confirm();
                     }
                 } else if ("PASSWORD_MISSING".equals(error.text) || error.text.startsWith("PASSWORD_TOO_FRESH_") || error.text.startsWith("SESSION_TOO_FRESH_")) {
                     if (passwordFragment != null) {

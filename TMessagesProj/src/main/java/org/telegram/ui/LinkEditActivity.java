@@ -649,7 +649,7 @@ public class LinkEditActivity extends BaseFragment {
                     finishFragment();
                 });
                 builder2.setNegativeButton(getString(R.string.Cancel), null);
-                showDialog(builder2.create());
+                builder2.create().confirm();
 
             });
             linearLayout.addView(revokeLink);

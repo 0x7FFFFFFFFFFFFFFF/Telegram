@@ -390,7 +390,7 @@ public class CommunityUtils {
                     AndroidUtilities.replaceTags(formatPluralString(add ? "CommunityAddAllChatsMessage" : "CommunityDeclineAllMessage", totalCount)),
                     getString(add ? R.string.Add : R.string.Decline), () -> onResolveAllJoinRequests(add, false)
                 );
-                dialog.show();
+                dialog.confirm();
                 if (!add) {
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {

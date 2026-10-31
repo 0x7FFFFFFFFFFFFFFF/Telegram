@@ -208,7 +208,7 @@ public class AutoDeleteMessagesActivity extends BaseFragment implements Notifica
                             dialog.dismiss();
                             selectRadioButton(v, true);
                         });
-                        builder.show();
+                        builder.create().confirm();
                     } else {
                         selectRadioButton(v, true);
                     }

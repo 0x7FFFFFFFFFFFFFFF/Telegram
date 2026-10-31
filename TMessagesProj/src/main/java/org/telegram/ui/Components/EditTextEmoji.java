@@ -946,11 +946,7 @@ public class EditTextEmoji extends FrameLayout implements NotificationCenter.Not
                 builder.setMessage(LocaleController.getString(R.string.ClearRecentEmojiText));
                 builder.setPositiveButton(LocaleController.getString(R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                if (parentFragment != null) {
-                    parentFragment.showDialog(builder.create());
-                } else {
-                    builder.show();
-                }
+                builder.create().confirm();
             }
         });
         sizeNotifierLayout.addView(emojiView);

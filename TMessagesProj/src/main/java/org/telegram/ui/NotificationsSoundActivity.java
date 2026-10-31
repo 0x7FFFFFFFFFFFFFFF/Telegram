@@ -207,7 +207,8 @@ public class NotificationsSoundActivity extends BaseFragment implements ChatAtta
                         deleteSelectedMessages();
                         dialog.dismiss();
                     });
-                    AlertDialog dialog = builder.show();
+                    AlertDialog dialog = builder.create();
+                    dialog.confirm();
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold, resourcesProvider));

@@ -415,7 +415,7 @@ public class BusinessLinksActivity extends UniversalFragment implements Notifica
                         })
                         .setNegativeButton(getString(R.string.Cancel), null)
                         .create();
-                showDialog(dialog);
+                dialog.confirm();
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(getThemedColor(Theme.key_text_RedBold));

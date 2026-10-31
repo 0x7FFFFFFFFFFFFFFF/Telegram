@@ -714,7 +714,8 @@ public class CaptionStory extends CaptionContainerView {
                 .setMessage(LocaleController.getString(R.string.StoryRemoveRoundMessage))
                 .setPositiveButton(LocaleController.getString(R.string.Remove), (di, w) -> removeRound())
                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-                .show();
+                .create();
+        d.confirm();
         TextView button = (TextView) d.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold, resourcesProvider));

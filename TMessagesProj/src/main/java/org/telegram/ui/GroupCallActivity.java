@@ -2038,7 +2038,7 @@ public class GroupCallActivity extends BottomSheet implements NotificationCenter
                     AlertDialog dialog = builder.create();
 
                     dialog.setBackgroundColor(Theme.getColor(Theme.key_voipgroup_dialogBackground));
-                    dialog.show();
+                    dialog.confirm();
                     TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_voipgroup_leaveCallMenu));
@@ -2064,7 +2064,7 @@ public class GroupCallActivity extends BottomSheet implements NotificationCenter
                         builder.setNegativeButton(getString(R.string.Cancel), null);
                         AlertDialog dialog = builder.create();
                         dialog.setBackgroundColor(Theme.getColor(Theme.key_voipgroup_dialogBackground));
-                        dialog.show();
+                        dialog.confirm();
                         dialog.setTextColor(Theme.getColor(Theme.key_voipgroup_nameText));
                     } else {
                         GroupCallRecordAlert alert = new GroupCallRecordAlert(getContext(), currentChat, hasVideo) {
@@ -7680,7 +7680,7 @@ public class GroupCallActivity extends BottomSheet implements NotificationCenter
         if (!fromOverlayWindow) {
             dialog.setBackgroundColor(Theme.getColor(Theme.key_voipgroup_dialogBackground));
         }
-        dialog.show();
+        dialog.confirm();
         if (!fromOverlayWindow) {
             TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (button != null) {
@@ -7812,7 +7812,7 @@ public class GroupCallActivity extends BottomSheet implements NotificationCenter
             builder.setNegativeButton(getString(R.string.Cancel), null);
             AlertDialog dialog = builder.create();
             dialog.setBackgroundColor(Theme.getColor(Theme.key_voipgroup_dialogBackground));
-            dialog.show();
+            dialog.confirm();
             if (option == 2) {
                 TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {

@@ -836,8 +836,7 @@ public class ChannelColorActivity extends BaseFragment implements NotificationCe
                     buttonClick();
                 })
                 .create();
-        showDialog(alertDialog);
-        ((TextView) alertDialog.getButton(DialogInterface.BUTTON_NEGATIVE)).setTextColor(getThemedColor(Theme.key_text_RedBold));
+        alertDialog.confirm();
     }
 
     private SelectAnimatedEmojiDialog.SelectAnimatedEmojiDialogWindow selectAnimatedEmojiDialog;

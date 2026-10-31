@@ -1951,7 +1951,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                                     })
                                     .setNegativeButton(getString(R.string.Cancel), null)
                                     .makeRed(AlertDialog.BUTTON_POSITIVE)
-                                    .show();
+                                    .create().confirm();
                             });
                         }
                         if (!currentStory.isLive && (isSelf || MessagesController.getInstance(currentAccount).getStoriesController().canDeleteStory(currentStory.storyItem))) {
@@ -3727,7 +3727,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                 runnable.run();
             });
             alertDialog.setNegativeButton(getString(R.string.Cancel), (dialog, which) -> dialog.dismiss());
-            alertDialog.show();
+            alertDialog.confirm();
         } else {
             runnable.run();
         }
@@ -4655,7 +4655,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
             dialog.dismiss();
         });
         AlertDialog dialog = builder.create();
-        delegate.showDialog(dialog);
+        dialog.confirm();
         dialog.redPositive();
     }
 
@@ -8336,7 +8336,7 @@ public class PeerStoriesView extends SizeNotifierFrameLayout implements Notifica
                 }
             });
             builder.setNegativeButton(getString(R.string.Continue), null);
-            delegate.showDialog(builder.create());
+            builder.create().confirm();
             return true;
         }
         return false;

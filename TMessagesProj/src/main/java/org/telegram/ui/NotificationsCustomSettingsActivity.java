@@ -772,7 +772,7 @@ public class NotificationsCustomSettingsActivity extends BaseFragment implements
                 });
                 builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
                 AlertDialog alertDialog = builder.create();
-                showDialog(alertDialog);
+                alertDialog.confirm();
                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

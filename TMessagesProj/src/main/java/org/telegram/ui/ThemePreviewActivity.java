@@ -2110,7 +2110,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                                 });
                                 builder1.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
                                 AlertDialog alertDialog = builder1.create();
-                                showDialog(alertDialog);
+                                alertDialog.confirm();
                                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                                 if (button != null) {
                                     button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -2886,6 +2886,8 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                     selectColorType(2, false);
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
+                builder.create().confirm();
+                return;
             }
             showDialog(builder.create());
             return;
@@ -3228,7 +3230,7 @@ public class ThemePreviewActivity extends BaseFragment implements DownloadContro
                 builder.setMessage(LocaleController.getString(R.string.SaveChangesAlertText));
                 builder.setPositiveButton(LocaleController.getString(R.string.Save), (dialogInterface, i) -> actionBar2.getActionBarMenuOnItemClick().onItemClick(4));
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> cancelThemeApply(false));
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

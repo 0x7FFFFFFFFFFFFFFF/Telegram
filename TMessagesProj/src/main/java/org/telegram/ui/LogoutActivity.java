@@ -150,7 +150,10 @@ public class LogoutActivity extends BaseFragment {
             } else if (position == phoneRow) {
                 presentFragment(new ActionIntroActivity(ActionIntroActivity.ACTION_TYPE_CHANGE_PHONE_NUMBER));
             } else if (position == supportRow) {
-                showDialog(AlertsCreator.createSupportAlert(LogoutActivity.this, null));
+                final AlertDialog supportAlert = AlertsCreator.createSupportAlert(LogoutActivity.this, null);
+                if (supportAlert != null) {
+                    supportAlert.confirm();
+                }
             } else if (position == logoutRow) {
                 if (getParentActivity() == null) {
                     return;
@@ -186,15 +189,20 @@ public class LogoutActivity extends BaseFragment {
     }
 
     public void showLogOutDialog(long grams) {
-        new AlertDialog.Builder(getContext())
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
             .setTitle(getString(R.string.LogOut))
             .setMessage(AndroidUtilities.replaceTags(grams > 0 ? formatString(R.string.AreYouSureLogoutGrams, GramWallet.formatGramsWithUnit(grams)) : getString(R.string.AreYouSureLogout)))
             .setPositiveButton(getString(R.string.LogOut), (dialogInterface, i) -> {
                 MessagesController.getInstance(currentAccount).performLogout(1);
             })
             .setNegativeButton(getString(R.string.Cancel), null)
-            .makeRed(DialogInterface.BUTTON_POSITIVE)
-            .show();
+            .makeRed(DialogInterface.BUTTON_POSITIVE);
+        if (grams > 0) {
+            // logging out deletes wallet backups holding these funds, so that case still asks
+            builder.show();
+        } else {
+            builder.create().confirm();
+        }
     }
 
     @Override

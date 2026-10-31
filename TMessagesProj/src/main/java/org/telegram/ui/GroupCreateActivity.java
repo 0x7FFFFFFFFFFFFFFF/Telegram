@@ -608,6 +608,8 @@ public class GroupCreateActivity extends BaseFragment implements NotificationCen
                                         }
                                     });
                                     builder.setNegativeButton(getString(R.string.Cancel), null);
+                                    builder.create().confirm();
+                                    return;
                                 } else {
                                     builder.setMessage(getString(R.string.CantAddBotAsAdmin));
                                     builder.setPositiveButton(getString(R.string.OK), null);
@@ -979,7 +981,7 @@ public class GroupCreateActivity extends BaseFragment implements NotificationCen
                 builder.setMessage(getString(R.string.PrivacySettingsChangedAlert));
                 builder.setPositiveButton(getString(R.string.ApplyTheme), (dialogInterface, i) -> onDonePressed(true));
                 builder.setNegativeButton(getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }
@@ -1053,7 +1055,7 @@ public class GroupCreateActivity extends BaseFragment implements NotificationCen
             }
             builder.setPositiveButton(getString(R.string.Add), (dialogInterface, i) -> onAddToGroupDone(cells[0] != null && cells[0].isChecked() ? 100 : 0));
             builder.setNegativeButton(getString(R.string.Cancel), null);
-            showDialog(builder.create());
+            builder.create().confirm();
         } else {
             if (chatType == ChatObject.CHAT_TYPE_CHANNEL) {
                 ArrayList<TLRPC.InputUser> result = new ArrayList<>();

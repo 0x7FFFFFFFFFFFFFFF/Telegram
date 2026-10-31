@@ -610,7 +610,7 @@ public class LimitReachedBottomSheet extends BottomSheetWithRecyclerListView imp
                         boostChannel();
                     });
                     builder.setNegativeButton(getString(R.string.Cancel), (dialog, which) -> dialog.dismiss());
-                    builder.show();
+                    builder.create().confirm();
                 } else if (canApplyBoost.floodWait != 0) {
                     BoostDialogs.showFloodWait(canApplyBoost.floodWait);
                 }
@@ -990,7 +990,7 @@ public class LimitReachedBottomSheet extends BottomSheetWithRecyclerListView imp
             }
         });
         AlertDialog alertDialog = builder.create();
-        alertDialog.show();
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold, resourcesProvider));
@@ -2649,7 +2649,7 @@ public class LimitReachedBottomSheet extends BottomSheetWithRecyclerListView imp
             }
         });
         AlertDialog alertDialog = builder.create();
-        alertDialog.show();
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold, resourcesProvider));

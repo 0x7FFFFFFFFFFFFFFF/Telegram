@@ -1044,7 +1044,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
                     });
                     builder1.setNegativeButton(getString("Cancel", R.string.Cancel), null);
                     AlertDialog alertDialog = builder1.create();
-                    showDialog(alertDialog);
+                    alertDialog.confirm();
                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -1537,7 +1537,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
         builder.setMessage(getString("CreateNewThemeAlert", R.string.CreateNewThemeAlert));
         builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
         builder.setPositiveButton(getString("CreateTheme", R.string.CreateTheme), (dialog, which) -> AlertsCreator.createThemeCreateDialog(ThemeActivity.this, 0, null, null));
-        showDialog(builder.create());
+        builder.create().confirm();
     }
 
     @Override
@@ -2210,7 +2210,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
                     });
                     builder1.setNegativeButton(getString("Cancel", R.string.Cancel), null);
                     AlertDialog alertDialog = builder1.create();
-                    showDialog(alertDialog);
+                    alertDialog.confirm();
                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -2404,7 +2404,7 @@ public class ThemeActivity extends BaseFragment implements NotificationCenter.No
                                     });
                                     builder1.setNegativeButton(getString("Cancel", R.string.Cancel), null);
                                     AlertDialog alertDialog = builder1.create();
-                                    showDialog(alertDialog);
+                                    alertDialog.confirm();
                                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                                     if (button != null) {
                                         button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

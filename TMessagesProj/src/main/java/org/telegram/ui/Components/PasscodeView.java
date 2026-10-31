@@ -1534,7 +1534,7 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
             checkImage.setVisibility(GONE);
             fingerprintImage.setVisibility(GONE);
         } else if (SharedConfig.passcodeType == SharedConfig.PASSCODE_TYPE_PASSWORD) {
-            passwordEditText.setFilters(new InputFilter[0]);
+            passwordEditText.setFilters(new InputFilter[] { new CodepointsLengthInputFilter(SharedConfig.PASSCODE_MAX_LENGTH) });
             passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
             numbersFrameLayout.setVisibility(GONE);
             passwordEditText.setFocusable(true);

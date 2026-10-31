@@ -413,7 +413,7 @@ public class BotVerifySheet {
                 }));
             })
             .makeRed(AlertDialog.BUTTON_POSITIVE)
-            .show();
+            .create().confirm();
     }
 
 }

@@ -13,12 +13,12 @@ import static org.telegram.messenger.AndroidUtilities.dp;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -68,6 +68,7 @@ import org.telegram.ui.Cells.TextCheckCell;
 import org.telegram.ui.Cells.TextInfoPrivacyCell;
 import org.telegram.ui.Cells.TextSettingsCell;
 import org.telegram.ui.Components.AlertsCreator;
+import org.telegram.ui.Components.CodepointsLengthInputFilter;
 import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.CustomPhoneKeyboardView;
 import org.telegram.ui.Components.Easings;
@@ -128,7 +129,8 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     @PasscodeActivityType
     private int type;
     @SharedConfig.PasscodeType
-    private int currentPasswordType = 0;
+    // new passcodes are a free-form string (any characters, up to SharedConfig.PASSCODE_MAX_LENGTH), never a 4-digit PIN
+    private int currentPasswordType = SharedConfig.PASSCODE_TYPE_PASSWORD;
     private int passcodeSetStep = 0;
     private String firstPassword;
 
@@ -305,8 +307,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                                     NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode);
                                     finishFragment();
                                 }).create();
-                        alertDialog.show();
-                        ((TextView)alertDialog.getButton(Dialog.BUTTON_POSITIVE)).setTextColor(Theme.getColor(Theme.key_text_RedBold));
+                        alertDialog.confirm();
                     } else if (position == changePasscodeRow) {
                         presentFragment(new PasscodeActivity(TYPE_SETUP_CODE));
                     } else if (position == autoLockRow) {
@@ -401,11 +402,8 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                     actionBar.setCastShadows(false);
                     ActionBarMenu menu = actionBar.createMenu();
 
-                    ActionBarMenuSubItem switchItem;
-                    if (type == TYPE_SETUP_CODE) {
-                        otherItem = menu.addItem(0, R.drawable.ic_ab_other);
-                        switchItem = otherItem.addSubItem(ID_SWITCH_TYPE, R.drawable.msg_permissions, LocaleController.getString(R.string.PasscodeSwitchToPassword));
-                    } else switchItem = null;
+                    // no "switch to PIN" menu: new passcodes are always a free-form string
+                    ActionBarMenuSubItem switchItem = null;
 
                     actionBar.setActionBarMenuOnItemClick(new ActionBar.ActionBarMenuOnItemClick() {
                         @Override
@@ -502,6 +500,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
 
                 passwordEditText = new EditTextBoldCursor(context);
                 passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+                passwordEditText.setFilters(new InputFilter[] { new CodepointsLengthInputFilter(SharedConfig.PASSCODE_MAX_LENGTH) });
                 passwordEditText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
                 passwordEditText.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
                 passwordEditText.setBackground(null);

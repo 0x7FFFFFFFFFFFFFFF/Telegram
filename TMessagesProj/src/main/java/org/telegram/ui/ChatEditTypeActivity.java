@@ -849,7 +849,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
                             .setNegativeButton(LocaleController.getString(R.string.Cancel), (di, e) -> {
                                 di.dismiss();
                             })
-                            .show();
+                            .create().confirm();
                     }
                 }
             });
@@ -1348,7 +1348,7 @@ public class ChatEditTypeActivity extends BaseFragment implements NotificationCe
                                 }
                             }, ConnectionsManager.RequestFlagInvokeAfter);
                         });
-                        showDialog(builder.create());
+                        builder.create().confirm();
                     }, false, 0);
                     adminedChannelCell.setChannel(res.chats.get(a), a == res.chats.size() - 1);
                     adminedChannelCells.add(adminedChannelCell);

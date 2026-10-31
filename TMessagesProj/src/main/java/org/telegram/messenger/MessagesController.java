@@ -22780,7 +22780,11 @@ public class MessagesController extends BaseController implements NotificationCe
                     }
                 });
             }
-            alert.show();
+            if (!needsVerification) {
+                alert.create().confirm();
+            } else {
+                alert.show();
+            }
         });
     }
 

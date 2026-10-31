@@ -414,11 +414,7 @@ public class BusinessRecipientsHelper {
                     })
                     .setNegativeButton(getString(R.string.Cancel), null)
                     .create();
-            if (fragment != null) {
-                fragment.showDialog(dialog);
-            } else {
-                dialog.show();
-            }
+            dialog.confirm();
             return true;
         }
         return false;

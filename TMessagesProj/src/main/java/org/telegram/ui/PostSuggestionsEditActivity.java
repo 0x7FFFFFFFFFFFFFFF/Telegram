@@ -291,7 +291,7 @@ public class PostSuggestionsEditActivity extends BaseFragment {
                 builder.setMessage(LocaleController.getString(R.string.MessageSuggestionsUnsavedChanges));
                 builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(LocaleController.getString(R.string.Discard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

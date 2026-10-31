@@ -1973,7 +1973,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
             builder.setTitle(LocaleController.getString(R.string.DiscardChanges));
             builder.setPositiveButton(LocaleController.getString(R.string.PassportDiscard), (dialogInterface, i) -> okRunnable.run());
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-            photoViewer.showAlertDialog(builder);
+            builder.create().confirm();
         } else {
             okRunnable.run();
         }
@@ -3590,7 +3590,7 @@ public class LPhotoPaintView extends SizeNotifierFrameLayoutPhoto implements IPh
                 builder.setMessage(LocaleController.getString(R.string.ClearRecentEmojiText));
                 builder.setPositiveButton(LocaleController.getString(R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                builder.show();
+                builder.create().confirm();
             }
         });
         addView(emojiView);

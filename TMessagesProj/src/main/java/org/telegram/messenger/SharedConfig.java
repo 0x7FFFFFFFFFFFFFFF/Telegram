@@ -63,6 +63,8 @@ public class SharedConfig {
 
     public final static int PASSCODE_TYPE_PIN = 0,
             PASSCODE_TYPE_PASSWORD = 1;
+    // longest passcode, in characters (code points)
+    public final static int PASSCODE_MAX_LENGTH = 500;
     private static int legacyDevicePerformanceClass = -1;
 
     public static boolean loopStickers() {

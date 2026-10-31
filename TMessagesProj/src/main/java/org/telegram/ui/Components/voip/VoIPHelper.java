@@ -226,7 +226,7 @@ public class VoIPHelper {
 							}
 						})
 						.setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-						.show();
+						.create().confirm();
 			} else {
 				if (user != null || !(activity instanceof LaunchActivity)) {
 					activity.startActivity(new Intent(activity, LaunchActivity.class).setAction(user != null ? "voip" : "voip_chat"));
@@ -354,7 +354,7 @@ public class VoIPHelper {
 					.setMessage(ChatObject.isChannelOrGiga(chat) ? LocaleController.getString(R.string.VoipChannelJoinAnonymouseAlert) : LocaleController.getString(R.string.VoipGroupJoinAnonymouseAlert))
 					.setPositiveButton(LocaleController.getString(R.string.VoipChatJoin), (dialog, which) -> doInitiateCall(user, chat, hash, peer, false, videoCall, canVideoCall, createCall, activity, fragment, accountInstance, false, false))
 					.setNegativeButton(LocaleController.getString(R.string.Cancel), null)
-					.show();
+					.create().confirm();
 			return;
 		}
 		if (chat != null && peer != null) {

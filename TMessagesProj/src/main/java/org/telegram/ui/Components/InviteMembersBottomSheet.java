@@ -290,8 +290,7 @@ public class InviteMembersBottomSheet extends UsersAlertBase implements Notifica
                 }
                 builder.setPositiveButton(LocaleController.getString(R.string.Add), (dialogInterface, i) -> onAddToGroupDone(0));
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                builder.create();
-                builder.show();
+                builder.create().confirm();
             }
         });
         floatingButton.setButtonVisible(false, false);

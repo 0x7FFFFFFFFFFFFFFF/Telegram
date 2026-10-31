@@ -803,7 +803,7 @@ public class ChatbotsActivity extends BaseFragment {
                 builder.setMessage(LocaleController.getString(R.string.BusinessBotUnsavedChanges));
                 builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }
@@ -814,7 +814,7 @@ public class ChatbotsActivity extends BaseFragment {
                 builder.setMessage(LocaleController.getString(R.string.BusinessBotNoAddedText));
                 builder.setPositiveButton(LocaleController.getString(R.string.BusinessBotNoAddedButton), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

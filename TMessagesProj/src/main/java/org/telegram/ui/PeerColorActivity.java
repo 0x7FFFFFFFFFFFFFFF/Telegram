@@ -1915,8 +1915,14 @@ public class PeerColorActivity extends BaseFragment implements NotificationCente
                     buttonClick();
                 })
                 .create();
-        showDialog(alertDialog);
-        ((TextView) alertDialog.getButton(DialogInterface.BUTTON_NEGATIVE)).setTextColor(getThemedColor(Theme.key_text_RedBold));
+        final Page page = getButtonPage();
+        if (page != null && page.selectedResaleGift != null) {
+            // applying would buy the selected resale gift, so this case still asks
+            showDialog(alertDialog);
+            ((TextView) alertDialog.getButton(DialogInterface.BUTTON_NEGATIVE)).setTextColor(getThemedColor(Theme.key_text_RedBold));
+            return;
+        }
+        alertDialog.confirm();
     }
 
     private void buttonClick() {

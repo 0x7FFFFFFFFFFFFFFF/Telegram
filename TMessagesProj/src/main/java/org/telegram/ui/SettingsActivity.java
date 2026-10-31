@@ -783,15 +783,8 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
 
     private void presentSettingFragment(BaseFragment fragment) {
         if (AndroidUtilities.isTablet() && LaunchActivity.instance != null && LaunchActivity.instance.getRightActionBarLayout() != null) {
-            final INavigationLayout layout = LaunchActivity.instance.getRightActionBarLayout();
-            if (!layout.getFragmentStack().isEmpty()) {
-                for (int a = 0; a < layout.getFragmentStack().size() - 1; a++) {
-                    layout.removeFragmentFromStack(layout.getFragmentStack().get(0));
-                    a--;
-                }
-                layout.closeLastFragment(false);
-            }
-            layout.presentFragment(new INavigationLayout.NavigationParams(fragment).setNoAnimation(true).forceRightLayout());
+            // a new right panel page, what the panel showed before stays reachable with back
+            LaunchActivity.instance.presentRightPanelPage(new INavigationLayout.NavigationParams(fragment).setNoAnimation(true).forceRightLayout());
         } else {
             presentFragment(fragment);
         }
@@ -884,9 +877,13 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 UserSelectorBottomSheet.open(0, BirthdayController.getInstance(UserConfig.selectedAccount).getState());
                 break;
 
-            case 17:
-                showDialog(AlertsCreator.createSupportAlert(this, resourceProvider));
+            case 17: {
+                final AlertDialog supportAlert = AlertsCreator.createSupportAlert(this, resourceProvider);
+                if (supportAlert != null) {
+                    supportAlert.confirm();
+                }
                 break;
+            }
             case 18:
                 Browser.openUrl(getParentActivity(), LocaleController.getString(R.string.TelegramFaqUrl));
                 break;

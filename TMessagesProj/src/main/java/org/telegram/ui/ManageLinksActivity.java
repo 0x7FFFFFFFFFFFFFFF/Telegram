@@ -647,7 +647,7 @@ public class ManageLinksActivity extends BaseFragment implements NotificationCen
                     }));
                 });
                 builder.setNegativeButton(getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
             } else if (position >= adminsStartRow && position < adminsEndRow) {
                 int p = position - adminsStartRow;
                 TLRPC.TL_chatAdminWithInvites admin = admins.get(p);
@@ -1092,7 +1092,7 @@ public class ManageLinksActivity extends BaseFragment implements NotificationCen
                             .setMessage(getString(R.string.DeleteLinkHelp))
                             .setPositiveButton(getString(R.string.Delete), (dialogInterface2, i2) -> deleteLink(inviteFinal))
                             .setNegativeButton(getString(R.string.Cancel), null)
-                            .show();
+                            .create().confirm();
                     });
                 } else {
                     options.add(R.drawable.msg_copy, getString(R.string.CopyLink), () -> {
@@ -1141,7 +1141,7 @@ public class ManageLinksActivity extends BaseFragment implements NotificationCen
                             .setTitle(getString(R.string.RevokeLink))
                             .setPositiveButton(getString(R.string.RevokeButton), (dialogInterface2, i2) -> revokeLink(inviteFinal))
                             .setNegativeButton(getString(R.string.Cancel), null)
-                            .show();
+                            .create().confirm();
                     });
                 }
                 options.setScrimViewBackground(listView.getClipBackground(LinkCell.this));

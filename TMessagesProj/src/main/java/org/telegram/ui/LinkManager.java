@@ -1245,7 +1245,7 @@ public class LinkManager {
         }
 
         if ("ask-question".equalsIgnoreCase(first) || "ask-a-question".equalsIgnoreCase(first)) {
-            AlertsCreator.createSupportAlert(getLastFragment(), null).show();
+            AlertsCreator.createSupportAlert(getLastFragment(), null).confirm();
             return true;
         }
         if ("faq".equalsIgnoreCase(first)) {

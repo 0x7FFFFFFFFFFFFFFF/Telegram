@@ -4732,7 +4732,7 @@ public class AndroidUtilities {
                         check.run();
                     })
                     .setNegativeButton(getString(R.string.Cancel), null)
-                    .show();
+                    .create().confirm();
             }
         }));
         if (!TextUtils.isEmpty(secret)) {

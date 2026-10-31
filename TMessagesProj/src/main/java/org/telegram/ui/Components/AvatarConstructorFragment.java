@@ -586,7 +586,7 @@ public class AvatarConstructorFragment extends BaseFragment {
             builder.setPositiveButton(getString(R.string.PassportDiscard), (dialogInterface, i) -> finishFragment());
             builder.setNegativeButton(getString(R.string.Cancel), null);
             AlertDialog dialog = builder.create();
-            showDialog(dialog);
+            dialog.confirm();
             dialog.redPositive();
         } else {
             finishFragment();
@@ -1608,7 +1608,7 @@ public class AvatarConstructorFragment extends BaseFragment {
                 builder.setPositiveButton(getString(R.string.PassportDiscard), (dialogInterface, i) -> finishFragment());
                 builder.setNegativeButton(getString(R.string.Cancel), null);
                 AlertDialog dialog = builder.create();
-                showDialog(dialog);
+                dialog.confirm();
                 dialog.redPositive();
             }
             return false;

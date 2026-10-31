@@ -347,7 +347,7 @@ public class ChangeUsernameActivity extends BaseFragment {
                         .setNegativeButton(LocaleController.getString(R.string.Cancel), (di, e) -> {
                             di.dismiss();
                         })
-                        .show();
+                        .create().confirm();
                 } else if (view instanceof InputCell) {
                     focusUsernameField(true);
                 }

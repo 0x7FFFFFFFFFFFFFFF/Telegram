@@ -137,7 +137,7 @@ public class GigagroupConvertAlert extends BottomSheet {
             builder.setMessage(AndroidUtilities.replaceTags(LocaleController.getString(R.string.GigagroupConvertAlertText)));
             builder.setPositiveButton(LocaleController.getString(R.string.GigagroupConvertAlertConver), (dialogInterface, i) -> onCovert());
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-            parentFragment.showDialog(builder.create());
+            builder.create().confirm();
         });
         linearLayout.addView(clearButton, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 50, Gravity.LEFT | Gravity.TOP, 0, 29, 0, 0));
 

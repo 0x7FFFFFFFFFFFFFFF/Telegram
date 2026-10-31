@@ -777,7 +777,7 @@ public class ChatCustomReactionsEditActivity extends BaseFragment implements Not
                 actionButton.performClick();
             });
             builder.setNegativeButton(getString(R.string.Discard), (dialogInterface, i) -> finishFragment());
-            builder.show();
+            builder.create().confirm();
         }
         return hasChanges;
     }

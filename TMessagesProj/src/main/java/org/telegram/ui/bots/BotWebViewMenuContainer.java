@@ -623,9 +623,7 @@ public class BotWebViewMenuContainer extends FrameLayout implements Notification
                     .setPositiveButton(LocaleController.getString(R.string.BotWebViewCloseAnyway), (dialog2, which) -> dismiss())
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                     .create();
-            dialog.show();
-            TextView textView = (TextView) dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            textView.setTextColor(getColor(Theme.key_text_RedBold));
+            dialog.confirm();
             return false;
         } else {
             dismiss();

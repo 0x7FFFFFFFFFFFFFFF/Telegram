@@ -1040,7 +1040,7 @@ public class PollCreateActivity extends BaseFragment implements NotificationCent
             builder.setMessage(getString(todo ? R.string.CancelTodoAlertText : R.string.CancelPollAlertText));
             builder.setPositiveButton(getString(R.string.PassportDiscard), (dialogInterface, i) -> finishFragment());
             builder.setNegativeButton(getString(R.string.Cancel), null);
-            showDialog(builder.create());
+            builder.create().confirm();
         }
         return allowDiscard;
     }
@@ -1502,7 +1502,7 @@ public class PollCreateActivity extends BaseFragment implements NotificationCent
                 builder.setMessage(getString(R.string.ClearRecentEmojiText));
                 builder.setPositiveButton(getString(R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
                 builder.setNegativeButton(getString(R.string.Cancel), null);
-                builder.show();
+                builder.create().confirm();
             }
 
             @Override

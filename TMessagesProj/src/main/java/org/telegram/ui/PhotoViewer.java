@@ -5405,6 +5405,8 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                                         } else {
                                             cell.setText(LocaleController.formatString("DeleteForUser", R.string.DeleteForUser, UserObject.getFirstName(currentUser)), "", false, false);
                                         }
+                                        // deleted media is removed for everyone by default
+                                        cell.setChecked(deleteForAll[0] = true, false);
                                         cell.setPadding(LocaleController.isRTL ? dp(16) : dp(8), 0, LocaleController.isRTL ? dp(8) : dp(16), 0);
                                         frameLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 0));
                                         cell.setOnClickListener(v -> {
@@ -5521,7 +5523,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     });
                     builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
                     AlertDialog alertDialog = builder.create();
-                    showAlertDialog(builder);
+                    alertDialog.confirm();
                     TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                     if (button != null) {
                         button.setTextColor(getThemedColor(Theme.key_text_RedBold));
@@ -8038,7 +8040,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                     AlertDialog alertDialog = builder.create();
                     alertDialog.setBlurParams(0.8f, false, true);
                     alertDialog.setBackgroundColor(ColorUtils.setAlphaComponent(0xff141414, (int) (0.8f * 255)));
-                    alertDialog.show();
+                    alertDialog.confirm();
                     alertDialog.setTextColor(Theme.getColor(Theme.key_voipgroup_nameText));
                     alertDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
@@ -8061,7 +8063,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         }
                     });
 
-                    if (isCurrentVideo && videoTextureView != null) {
+                    if (alertDialog.isShowing() && isCurrentVideo && videoTextureView != null) {
                         try {
                             lastFrameBitmap = videoTextureView.getBitmap();
                             if (lastFrameImageView != null) {
@@ -12540,7 +12542,7 @@ public class PhotoViewer implements NotificationCenter.NotificationCenterDelegat
                         builder.setTitle(getString("AppName", R.string.AppName));
                         builder.setPositiveButton(getString("OK", R.string.OK), (dialogInterface, i) -> switchToEditMode(0));
                         builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
-                        showAlertDialog(builder);
+                        builder.create().confirm();
                     } else {
                         switchToEditMode(EDIT_MODE_NONE);
                     }

@@ -2007,12 +2007,12 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
             if (nameTextView != null && !currentUser.first_name.equals(nameTextView.getText().toString()) ||
                     descriptionTextView != null && !about.equals(descriptionTextView.getText().toString())) {
                 if (invoked) {
-                    showDialog(new AlertDialog.Builder(getParentActivity())
+                    new AlertDialog.Builder(getParentActivity())
                             .setTitle(getString(R.string.UserRestrictionsApplyChanges))
                             .setMessage(getString(R.string.BotSettingsChangedAlert))
                             .setPositiveButton(getString(R.string.ApplyTheme), (dialogInterface, i) -> processDone())
                             .setNegativeButton(getString(R.string.PassportDiscard), (dialog, which) -> finishFragment())
-                            .create());
+                            .create().confirm();
                 }
                 return false;
             }
@@ -2035,7 +2035,7 @@ public class ChatEditActivity extends BaseFragment implements ImageUpdater.Image
                 }
                 builder.setPositiveButton(getString("ApplyTheme", R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(getString("PassportDiscard", R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }

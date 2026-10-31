@@ -22,7 +22,6 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
@@ -293,9 +292,7 @@ public class ChatAttachAlertBotWebViewLayout extends ChatAttachAlert.AttachAlert
                     .setPositiveButton(LocaleController.getString(R.string.BotWebViewCloseAnyway), (dialog2, which) -> parentAlert.dismiss())
                     .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                     .create();
-            dialog.show();
-            TextView textView = (TextView) dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            textView.setTextColor(getThemedColor(Theme.key_text_RedBold));
+            dialog.confirm();
             return false;
         } else {
             parentAlert.dismiss();

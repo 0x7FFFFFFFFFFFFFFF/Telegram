@@ -174,7 +174,7 @@ public class AddressBarList extends FrameLayout {
                 AddressBarList.clearRecentSearches(getContext());
                 listView.adapter.update(true);
             }).setNegativeButton(getString(R.string.Cancel), null)
-            .show();
+            .create().confirm();
     }
 
     public void fillItems(ArrayList<UItem> items, UniversalAdapter adapter) {

@@ -26,7 +26,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -457,9 +456,7 @@ public class BottomSheetTabs extends FrameLayout {
                 clicked[0] = true;
             }
         });
-        dialog[0].show();
-        TextView textView = (TextView) dialog[0].getButton(AlertDialog.BUTTON_POSITIVE);
-        textView.setTextColor(Theme.getColor(Theme.key_text_RedBold));
+        dialog[0].confirm();
     }
 
     public boolean removeTab(WebTabData tab, boolean destroy) {

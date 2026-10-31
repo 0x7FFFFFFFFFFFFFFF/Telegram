@@ -3873,7 +3873,8 @@ public class ArticleViewer extends IArticleViewer implements NotificationCenter.
                 .setPositiveButton(LocaleController.getString(R.string.Open), (di, w) -> {
                     openWebpageUrlInternal(url, anchor, progress);
                 })
-                .show();
+                .create()
+                .confirm();
             return;
         }
         openWebpageUrlInternal(url, anchor, progress);

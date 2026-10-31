@@ -34,6 +34,20 @@ subprojects {
         }
     }
 
+    // aidl writes its whole command line into a comment of the generated Java files. On Windows a path
+    // like C:\Users\user1\... then reads as an invalid \u unicode escape and javac fails, so drop that line.
+    tasks.withType(com.android.build.gradle.tasks.AidlCompile).configureEach { task ->
+        task.doLast {
+            project.fileTree(task.sourceOutputDir.get().asFile) { include '**/*.java' }.each { file ->
+                def text = file.getText('UTF-8')
+                def fixed = text.replaceFirst('(?m)^ \\* Using: .*$', ' * Using: aidl')
+                if (fixed != text) {
+                    file.write(fixed, 'UTF-8')
+                }
+            }
+        }
+    }
+
     if (project.projectDir.absolutePath.contains('/TMessagesProj_Modules/media/')) {
         project.plugins.withId('com.android.library') {
             project.android {

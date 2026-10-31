@@ -1197,7 +1197,7 @@ public class AlertsCreator {
 
     public static AlertDialog showSimpleConfirmAlert(Context context, Theme.ResourcesProvider resourcesProvider, final String title, final CharSequence text, final String confirm, final boolean confirmIsRed, final Runnable onConfirm) {
         AlertDialog dialog = createSimpleConfirmAlert(context, resourcesProvider, title, text, confirm, onConfirm);
-        dialog.show();
+        dialog.confirm();
         if (confirmIsRed) {
             TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (button != null) {
@@ -1209,7 +1209,7 @@ public class AlertsCreator {
 
     public static AlertDialog showSimpleConfirmAlert(BaseFragment baseFragment, final String title, final CharSequence text, final String confirm, final boolean confirmIsRed, final Runnable onConfirm) {
         AlertDialog dialog = createSimpleConfirmAlert(baseFragment.getContext(), baseFragment.getResourceProvider(), title, text, confirm, onConfirm);
-        baseFragment.showDialog(dialog);
+        dialog.confirm();
 
         if (confirmIsRed) {
             TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
@@ -1310,7 +1310,7 @@ public class AlertsCreator {
         }
 
         AlertDialog dialog = dialogs[0] = builder.create();
-        dialog.show();
+        dialog.confirm();
 
         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
@@ -1397,7 +1397,7 @@ public class AlertsCreator {
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         AlertDialog dialog = builder.create();
-        fragment.showDialog(dialog);
+        dialog.confirm();
         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -1486,7 +1486,7 @@ public class AlertsCreator {
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         AlertDialog dialog = builder.create();
-        fragment.showDialog(dialog);
+        dialog.confirm();
         TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -1806,7 +1806,8 @@ public class AlertsCreator {
         builder.setPositiveButton(LocaleController.getString(R.string.Open), (dialogInterface, i) -> open.run());
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
 
-        dialog[0] = builder.show();
+        dialog[0] = builder.create();
+        dialog[0].confirm();
     }
 
     public static void showOpenExternalBrowserAlert(
@@ -1872,7 +1873,8 @@ public class AlertsCreator {
             if (dialog[0] != null) dialog[0].dismiss();
         });
 
-        dialog[0] = builder.show();
+        dialog[0] = builder.create();
+        dialog[0].confirm();
     }
 
     private static boolean checkInternalBotApp(String url) {
@@ -2071,7 +2073,7 @@ public class AlertsCreator {
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         AlertDialog alertDialog = builder.create();
-        fragment.showDialog(alertDialog);
+        alertDialog.confirm();
     }
 
     public static void createBotLaunchAlert(BaseFragment fragment, TLRPC.User user, Runnable onConfirm, Runnable onDismiss) {
@@ -2758,7 +2760,9 @@ public class AlertsCreator {
                 updateText.run();
             });
 
-            if (forceDeleteForAll) {
+            // deleting or clearing a private or secret chat removes it for the other person too by default,
+            // deleting a whole group or channel for all its members still needs forceDeleteForAll
+            if (forceDeleteForAll || !deleteChatForAll) {
                 cell[0].setChecked(deleteForAll[0] = true, false);
                 updateText.run();
             }
@@ -2927,7 +2931,7 @@ public class AlertsCreator {
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         final AlertDialog alertDialog = builder.create();
-        fragment.showDialog(alertDialog);
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -2996,7 +3000,7 @@ public class AlertsCreator {
             onLeave.run();
         });
         final AlertDialog dialog = builder.create();
-        dialog.show();
+        dialog.confirm();
 
         final View button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (button instanceof TextView) {
@@ -3042,7 +3046,8 @@ public class AlertsCreator {
             if (hasDialogsToRevoke) {
                 cell[0] = new CheckBoxCell(context, 1, resourcesProvider);
                 cell[0].setBackgroundDrawable(Theme.getSelectorDrawable(false));
-                cell[0].setText(LocaleController.getString(R.string.DeleteMessagesForBothSidesWherePossible), "", false, false);
+                // deleted chats are removed for the other side too by default
+                cell[0].setText(LocaleController.getString(R.string.DeleteMessagesForBothSidesWherePossible), "", deleteForAll[0] = true, false);
                 cell[0].setPadding(LocaleController.isRTL ? dp(16) : dp(8), 0, LocaleController.isRTL ? dp(8) : dp(16), 0);
                 frameLayout.addView(cell[0], LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM | Gravity.LEFT, 0, 0, 0, 0));
                 cell[0].setOnClickListener(v -> {
@@ -3076,7 +3081,7 @@ public class AlertsCreator {
         });
         builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
         AlertDialog alertDialog = builder.create();
-        fragment.showDialog(alertDialog);
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -3170,7 +3175,8 @@ public class AlertsCreator {
             cell[0].setPadding(LocaleController.isRTL ? dp(16) : dp(8), 0, LocaleController.isRTL ? dp(8) : dp(16), 0);
             frameLayout.addView(cell[0], LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.BOTTOM | Gravity.LEFT, 0, 0, 0, 0));
 
-            cell[0].setChecked(false, false);
+            // cleared messages are removed for everyone too by default
+            cell[0].setChecked(deleteForAll[0] = true, false);
             cell[0].setOnClickListener(v -> {
                 CheckBoxCell cell1 = (CheckBoxCell) v;
                 deleteForAll[0] = !deleteForAll[0];
@@ -3187,7 +3193,7 @@ public class AlertsCreator {
         });
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         AlertDialog alertDialog = builder.create();
-        fragment.showDialog(alertDialog);
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -3256,7 +3262,7 @@ public class AlertsCreator {
                 })
                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                 .create();
-        fragment.showDialog(dialog);
+        dialog.confirm();
     }
 
     public static void createChangeBioAlert(String currentBio, long peerId, Context context, int currentAccount) {
@@ -3595,7 +3601,7 @@ public class AlertsCreator {
             dialog.dismiss();
             onDiscard.run();
         });
-        baseFragment.showDialog(builder.create());
+        builder.create().confirm();
     }
 
     public static void createContactInviteDialog(BaseFragment parentFragment, String fisrtName, String lastName, String phone) {
@@ -3612,7 +3618,7 @@ public class AlertsCreator {
                 FileLog.e(e);
             }
         });
-        parentFragment.showDialog(builder.create());
+        builder.create().confirm();
     }
 
     public static ActionBarPopupWindow createSimplePopup(BaseFragment fragment, View popupView, View anhcorView, float x, float y) {
@@ -3744,7 +3750,7 @@ public class AlertsCreator {
         builder.setPositiveButton(actionText, (dialogInterface, i) -> onProcessRunnable.run(checks[0], checks[1]));
         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
         AlertDialog alertDialog = builder.create();
-        fragment.showDialog(alertDialog);
+        alertDialog.confirm();
         TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -8037,7 +8043,7 @@ public class AlertsCreator {
                         hideDim.run();
                     });
                 }
-                deleteMessagesBottomSheet.show();
+                deleteMessagesBottomSheet.confirm();
                 return;
             } else if (!hasNotOut && myMessagesCount > 0 && hasNonDiceMessages) {
                 hasDeleteForAllCheck = true;
@@ -8049,6 +8055,8 @@ public class AlertsCreator {
                 } else {
                     cell.setText(LocaleController.getString(R.string.DeleteMessagesOption), "", false, false);
                 }
+                // deleted messages are removed for everyone by default
+                cell.setChecked(deleteForAll[0] = true, false);
                 cell.setPadding(LocaleController.isRTL ? dp(16) : dp(8), 0, LocaleController.isRTL ? dp(8) : dp(16), 0);
                 frameLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 0));
                 cell.setOnClickListener(v -> {
@@ -8108,6 +8116,8 @@ public class AlertsCreator {
                 } else {
                     cell.setText(LocaleController.getString(R.string.DeleteMessagesOption), "", false, false);
                 }
+                // deleted messages are removed for everyone by default
+                cell.setChecked(deleteForAll[0] = true, false);
                 cell.setPadding(LocaleController.isRTL ? dp(16) : dp(8), 0, LocaleController.isRTL ? dp(8) : dp(16), 0);
                 frameLayout.addView(cell, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 48, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 0));
                 cell.setOnClickListener(v -> {
@@ -8294,6 +8304,12 @@ public class AlertsCreator {
             }
         });
         AlertDialog dialog = builder.create();
+        if (!hasUnsafePaidSuggestedPostStars && !hasUnsafePaidSuggestedPostTon) {
+            // deleting a paid suggested post too early forfeits its Stars or TON, so only that case still asks
+            deleteAction.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+            dialog.dismiss();
+            return;
+        }
         fragment.showDialog(dialog);
         TextView positiveButton = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
         if (positiveButton != null) {
@@ -9213,7 +9229,8 @@ public class AlertsCreator {
                 onConfirm.run();
             })
             .setNegativeButton(getString(R.string.Cancel), null)
-            .show();
+            .create()
+            .confirm();
     }
 
     public static BottomSheet createCustomPicker(Context context, String title, int selected, String[] positions, final Utilities.Callback<Integer> whenPicked) {

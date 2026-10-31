@@ -1215,8 +1215,7 @@ public class SelectAnimatedEmojiDialog extends FrameLayout implements Notificati
         builder.setOnDismissListener(di -> {
             setDim(0, true);
         });
-        builder.show();
-        setDim(1f, true);
+        builder.create().confirm();
     }
 
     private boolean isLongPressEnabled = true;

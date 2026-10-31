@@ -55,6 +55,7 @@ import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SvgHelper;
 import org.telegram.messenger.UserConfig;
 import org.telegram.messenger.UserObject;
+import org.telegram.messenger.Utilities;
 import org.telegram.tgnet.ConnectionsManager;
 import org.telegram.tgnet.TLObject;
 import org.telegram.tgnet.TLRPC;
@@ -335,12 +336,8 @@ public class SessionsActivity extends BaseFragment implements NotificationCenter
                         }
                     }
 
-                    AlertsCreator.showAlertWithCheckbox(
-                        getContext(),
-                        getString(R.string.AreYouSureSessionsTitle),
-                        getString(R.string.AreYouSureSessions),
-                        formatSpannable(R.string.AlsoTerminateChatbot, chatbots),
-                        getString(R.string.Terminate),
+                    // was a confirmation with an "also terminate chatbot" checkbox (unchecked by default): run it with the default
+                    final Utilities.Callback<Boolean> terminateAll =
                         alsoTerminate -> {
                             if (alsoTerminate != null && alsoTerminate && bots != null && !bots.isEmpty()) {
                                 final TL_account.updateConnectedBot req = new TL_account.updateConnectedBot();
@@ -375,9 +372,8 @@ public class SessionsActivity extends BaseFragment implements NotificationCenter
                                     ConnectionsManager.getInstance(a).setUserId(userConfig.getClientUserId());
                                 }
                             });
-                        },
-                        resourceProvider
-                    );
+                        };
+                    terminateAll.run(false);
                     return;
                 }
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
@@ -432,7 +428,7 @@ public class SessionsActivity extends BaseFragment implements NotificationCenter
                 });
                 builder.setNegativeButton(getString(R.string.Cancel), null);
                 AlertDialog alertDialog = builder.create();
-                showDialog(alertDialog);
+                alertDialog.confirm();
                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
@@ -564,7 +560,7 @@ public class SessionsActivity extends BaseFragment implements NotificationCenter
                 });
                 builder.setNegativeButton(getString(R.string.Cancel), null);
                 AlertDialog alertDialog = builder.create();
-                showDialog(alertDialog);
+                alertDialog.confirm();
                 TextView button = (TextView) alertDialog.getButton(DialogInterface.BUTTON_POSITIVE);
                 if (button != null) {
                     button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

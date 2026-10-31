@@ -1325,7 +1325,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
             builder.setMessage(getString(todo ? R.string.CancelTodoAlertText : R.string.CancelPollAlertText));
             builder.setPositiveButton(getString(R.string.PassportDiscard), (dialogInterface, i) -> parentAlert.dismiss());
             builder.setNegativeButton(getString(R.string.Cancel), null);
-            builder.show();
+            builder.create().confirm();
         }
         return allowDiscard;
     }
@@ -1795,7 +1795,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                 builder.setMessage(getString(R.string.ClearRecentEmojiText));
                 builder.setPositiveButton(getString(R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
                 builder.setNegativeButton(getString(R.string.Cancel), null);
-                builder.show();
+                builder.create().confirm();
             }
 
             @Override
@@ -1877,7 +1877,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                 .setOnCancelListener((dialogInterface) -> deleteButton.setTag(null))
                 .create();
 
-            dialog.show();
+            dialog.confirm();
             TextView button = (TextView) dialog.getButton(DialogInterface.BUTTON_POSITIVE);
             if (button != null) {
                 button.setTextColor(Theme.getColor(Theme.key_text_RedBold));

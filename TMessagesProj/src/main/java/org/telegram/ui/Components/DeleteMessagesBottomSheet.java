@@ -1235,6 +1235,11 @@ public class DeleteMessagesBottomSheet extends BottomSheetWithRecyclerListView {
         super.dismiss();
     }
 
+    // deletes with the default options, as if the button was tapped without showing the sheet
+    public void confirm() {
+        proceed();
+    }
+
     private void proceed() {
         proceed(true);
     }

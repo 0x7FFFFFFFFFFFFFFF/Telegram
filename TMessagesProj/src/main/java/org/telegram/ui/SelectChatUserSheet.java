@@ -585,7 +585,7 @@ public class SelectChatUserSheet extends BottomSheetWithRecyclerListView {
                         builder.setNegativeButton(LocaleController.getString(R.string.Cancel), (di, w) -> {
                             button.setLoading(false);
                         });
-                        builder.show();
+                        builder.create().confirm();
                     }
                 } else if ("PASSWORD_MISSING".equals(error.text) || error.text.startsWith("PASSWORD_TOO_FRESH_") || error.text.startsWith("SESSION_TOO_FRESH_")) {
                     if (passwordFragment != null) {

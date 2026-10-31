@@ -217,7 +217,7 @@ public class LinkActionView extends LinearLayout {
                 }
             });
             builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-            fragment.showDialog(builder.create());
+            builder.create().confirm();
         });
 
         optionsView.setOnClickListener(view -> {
@@ -521,7 +521,7 @@ public class LinkActionView extends LinearLayout {
         if (button != null) {
             button.setTextColor(Theme.getColor(Theme.key_text_RedBold));
         }
-        builder.show();
+        dialog.confirm();
     }
 
     public void setDelegate(Delegate delegate) {

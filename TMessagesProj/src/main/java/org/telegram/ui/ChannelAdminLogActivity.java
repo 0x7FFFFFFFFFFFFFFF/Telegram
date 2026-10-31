@@ -2812,7 +2812,7 @@ public class ChannelAdminLogActivity extends BaseFragment implements Notificatio
             builder.setMessage(LocaleController.formatString(R.string.OpenUrlAlert2, url));
             builder.setPositiveButton(getString(R.string.Open), (dialogInterface, i) -> Browser.openUrl(getParentActivity(), url, true));
             builder.setNegativeButton(getString(R.string.Cancel), null);
-            showDialog(builder.create());
+            builder.create().confirm();
         }
     }
 

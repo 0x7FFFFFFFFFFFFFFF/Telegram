@@ -145,7 +145,7 @@ public class PasskeysActivity extends BaseFragment {
                     })
                     .setNegativeButton(getString(R.string.Cancel), null)
                     .makeRed(AlertDialog.BUTTON_POSITIVE)
-                    .show();
+                    .create().confirm();
             })
             .setScrimViewBackground(listView.getClipBackground(cell))
             .show();

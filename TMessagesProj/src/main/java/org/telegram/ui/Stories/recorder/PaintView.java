@@ -3183,7 +3183,7 @@ public class PaintView extends SizeNotifierFrameLayoutPhoto implements IPhotoPai
             builder.setTitle(getString("DiscardChanges", R.string.DiscardChanges));
             builder.setPositiveButton(getString("PassportDiscard", R.string.PassportDiscard), (dialogInterface, i) -> okRunnable.run());
             builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
-            photoViewer.showAlertDialog(builder);
+            builder.create().confirm();
         } else {
             okRunnable.run();
         }
@@ -3214,7 +3214,7 @@ public class PaintView extends SizeNotifierFrameLayoutPhoto implements IPhotoPai
             builder.setTitle(getString("DiscardChanges", R.string.DiscardChanges));
             builder.setPositiveButton(getString("PassportDiscard", R.string.PassportDiscard), (dialogInterface, i) -> okRunnable.run());
             builder.setNegativeButton(getString("Cancel", R.string.Cancel), null);
-            builder.show();
+            builder.create().confirm();
         } else {
             okRunnable.run();
         }
@@ -5396,7 +5396,7 @@ public class PaintView extends SizeNotifierFrameLayoutPhoto implements IPhotoPai
                 builder.setMessage(getString(R.string.ClearRecentEmojiText));
                 builder.setPositiveButton(getString(R.string.ClearButton), (dialogInterface, i) -> emojiView.clearRecentEmoji());
                 builder.setNegativeButton(getString(R.string.Cancel), null);
-                builder.show();
+                builder.create().confirm();
             }
         });
         parent.addView(emojiView);

@@ -205,7 +205,7 @@ public class MediaActivity extends BaseFragment implements SharedMediaLayout.Sha
                                 dialog.dismiss();
                             });
                             AlertDialog dialog = builder.create();
-                            dialog.show();
+                            dialog.confirm();
                             dialog.redPositive();
                         }
                     }

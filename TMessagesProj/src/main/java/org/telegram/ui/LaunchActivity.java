@@ -249,10 +249,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -346,6 +348,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     private boolean passcodeSaveIntentIsRestore;
 
     private boolean tabletFullSize;
+
+    // In tablet two-pane mode, the right panel keeps its previous screens under the current one, so the back
+    // gesture returns to them. Each "page" of that history starts with a fragment brought in from outside the panel.
+    private static final int MAX_RIGHT_PANEL_PAGES = 10;
+    private final Set<BaseFragment> rightPanelPageStarts = Collections.newSetFromMap(new WeakHashMap<>());
 
     private String loadingThemeFileName;
     private String loadingThemeWallpaperName;
@@ -2951,14 +2958,14 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 //                            push_story_id = intent.getIntExtra("storyId", 0);
                             showDialogsList = true;
                         } else if (chatId != 0) {
-                            NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
+                            closeChatsBeforeOpeningChat(intentAccount[0]);
                             push_chat_id = chatId;
                             push_topic_id = topicId;
                         } else if (userId != 0) {
-                            NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
+                            closeChatsBeforeOpeningChat(intentAccount[0]);
                             push_user_id = userId;
                         } else if (encId != 0) {
-                            NotificationCenter.getInstance(intentAccount[0]).postNotificationName(NotificationCenter.closeChats);
+                            closeChatsBeforeOpeningChat(intentAccount[0]);
                             push_enc_id = encId;
                         } else {
                             showDialogsList = true;
@@ -4730,7 +4737,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                                         MessagesController.getInstance(intentAccount).addUserToChat(-did, user, 0, botHash, chatActivity, null);
                                         getActionBarLayout().presentFragment(chatActivity, true, false, true, false);
                                     });
-                                    builder.show();
+                                    builder.create().confirm();
                                 }
                                 return true;
                             });
@@ -5292,7 +5299,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 }
                 if (response instanceof TLRPC.TL_langPackLanguage) {
                     TLRPC.TL_langPackLanguage res = (TLRPC.TL_langPackLanguage) response;
-                    showAlertDialog(AlertsCreator.createLanguageAlert(LaunchActivity.this, res));
+                    final AlertDialog.Builder languageAlert = AlertsCreator.createLanguageAlert(LaunchActivity.this, res);
+                    if (res.strings_count != 0 && !LocaleController.getInstance().getCurrentLocaleInfo().shortName.equals(res.lang_code)) {
+                        // a language link switches right away; the alert only stays for the "already using" and "unknown language" notices
+                        languageAlert.create().confirm();
+                    } else {
+                        showAlertDialog(languageAlert);
+                    }
                 } else if (error != null) {
                     if ("LANG_CODE_NOT_SUPPORTED".equals(error.text)) {
                         showAlertDialog(AlertsCreator.createSimpleAlert(LaunchActivity.this, LocaleController.getString(R.string.LanguageUnsupportedError)));
@@ -6729,6 +6742,58 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     public INavigationLayout getRightActionBarLayout() {
         return rightActionBarLayout;
+    }
+
+    public boolean isTabletRightPanel(INavigationLayout layout) {
+        return AndroidUtilities.isTablet() && !tabletFullSize && layout != null && layout == rightActionBarLayout;
+    }
+
+    // index in the right panel stack where the current (topmost) history page starts
+    public int getRightPanelPageStart() {
+        for (int i = rightFragmentsStack.size() - 1; i > 0; i--) {
+            if (rightPanelPageStarts.contains(rightFragmentsStack.get(i))) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    // shows a fragment in the right panel as a new history page, keeping the current pages below it
+    public boolean presentRightPanelPage(INavigationLayout.NavigationParams params) {
+        if (!rightFragmentsStack.isEmpty()) {
+            trimRightPanelHistory(MAX_RIGHT_PANEL_PAGES - 1);
+            rightPanelPageStarts.add(params.fragment);
+        }
+        final BaseFragment covered = rightActionBarLayout.getLastFragment();
+        if (!rightActionBarLayout.presentFragment(params.setRemoveLast(false))) {
+            return false;
+        }
+        if (covered instanceof ChatActivity && !(params.fragment instanceof ChatActivity) && ((ChatActivity) covered).getChatMode() == 0) {
+            // the covered chat is kept for back navigation, but is not the opened one anymore
+            final ChatActivity chat = (ChatActivity) covered;
+            chat.getNotificationCenter().postNotificationName(NotificationCenter.openedChatChanged, chat.getDialogId(), chat.getTopicId(), true);
+        }
+        return true;
+    }
+
+    // in tablet two-pane mode the chat opens as a new right panel page instead, so the current one stays reachable with back
+    private void closeChatsBeforeOpeningChat(int account) {
+        if (!AndroidUtilities.isTablet() || tabletFullSize || rightActionBarLayout == null) {
+            NotificationCenter.getInstance(account).postNotificationName(NotificationCenter.closeChats);
+        }
+    }
+
+    private void trimRightPanelHistory(int maxPages) {
+        int keepFrom = 0;
+        for (int i = rightFragmentsStack.size() - 1, pages = 0; i > 0; i--) {
+            if (rightPanelPageStarts.contains(rightFragmentsStack.get(i)) && ++pages >= maxPages) {
+                keepFrom = i;
+                break;
+            }
+        }
+        for (int i = 0; i < keepFrom; i++) {
+            rightActionBarLayout.removeFragmentFromStack(rightFragmentsStack.get(0), true);
+        }
     }
 
     @Override
@@ -8669,7 +8734,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             }
             if (
                 fragment instanceof ChatActivity && !((ChatActivity) fragment).isInScheduleMode() || params.forceRightLayout ||
-                layout == rightActionBarLayout && (rightActionBarLayout.getFragmentStack().size() > 1 || !(rightActionBarLayout.getLastFragment() instanceof ChatActivity))
+                layout == rightActionBarLayout && (rightActionBarLayout.getFragmentStack().size() - getRightPanelPageStart() > 1 || !(rightActionBarLayout.getLastFragment() instanceof ChatActivity))
             ) {
                 if (!tabletFullSize && layout == rightActionBarLayout || tabletFullSize && layout == actionBarLayout) {
                     if (layout == rightActionBarLayout) {
@@ -8695,8 +8760,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                         rightActionBarLayout.getView().setVisibility(View.VISIBLE);
                     }
                     backgroundTablet.setVisibility(View.GONE);
-                    rightActionBarLayout.removeAllFragments();
-                    rightActionBarLayout.presentFragment(params.setNoAnimation(true).setRemoveLast(removeLast).setCheckPresentFromDelegate(false));
+                    presentRightPanelPage(params.setNoAnimation(true).setCheckPresentFromDelegate(false));
                     if (!layersActionBarLayout.getFragmentStack().isEmpty()) {
                         for (int a = 0; a < layersActionBarLayout.getFragmentStack().size() - 1; a++) {
                             layersActionBarLayout.removeFragmentFromStack(layersActionBarLayout.getFragmentStack().get(0));

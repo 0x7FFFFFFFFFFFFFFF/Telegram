@@ -637,7 +637,7 @@ public class ChatThemeBottomSheet extends BottomSheet implements NotificationCen
             builder.setMessage(LocaleController.getString(R.string.ChatThemeSaveDialogText));
             builder.setPositiveButton(LocaleController.getString(R.string.ChatThemeSaveDialogApply), (dialogInterface, i) -> applySelectedTheme());
             builder.setNegativeButton(LocaleController.getString(R.string.ChatThemeSaveDialogDiscard), (dialogInterface, i) -> dismiss());
-            builder.show();
+            builder.create().confirm();
         } else {
             dismiss();
         }

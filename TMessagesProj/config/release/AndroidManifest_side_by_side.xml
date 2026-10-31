@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A release build under the beta package name installs next to the official app (see build.cmd),
+     so it takes the beta app's name to tell the two apart. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:label="@string/AppNameBeta"
+        tools:replace="android:label" />
+
+</manifest>

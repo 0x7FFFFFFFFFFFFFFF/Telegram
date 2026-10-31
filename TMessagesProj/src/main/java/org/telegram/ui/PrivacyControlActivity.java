@@ -619,7 +619,7 @@ public class PrivacyControlActivity extends BaseFragment implements Notification
                             MessagesController.getInstance(currentAccount).deleteUserPhoto(inputPhoto);
                             NotificationCenter.getInstance(currentAccount).postNotificationName(NotificationCenter.reloadDialogPhotos);
                         }, null).create();
-                alertDialog.show();
+                alertDialog.confirm();
                 alertDialog.redPositive();
 
             } else if (position == photoForRestRow) {
@@ -1699,7 +1699,7 @@ public class PrivacyControlActivity extends BaseFragment implements Notification
                     preferences.edit().putBoolean("privacyAlertShowed", true).commit();
                 });
                 builder.setNegativeButton(LocaleController.getString(R.string.Cancel), null);
-                showDialog(builder.create());
+                builder.create().confirm();
                 return;
             }
         }
@@ -1714,7 +1714,7 @@ public class PrivacyControlActivity extends BaseFragment implements Notification
                 builder.setMessage(LocaleController.getString(R.string.PrivacySettingsChangedAlert));
                 builder.setPositiveButton(LocaleController.getString(R.string.ApplyTheme), (dialogInterface, i) -> processDone());
                 builder.setNegativeButton(LocaleController.getString(R.string.PassportDiscard), (dialog, which) -> finishFragment());
-                showDialog(builder.create());
+                builder.create().confirm();
             }
             return false;
         }
