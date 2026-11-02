@@ -152,6 +152,7 @@ import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ChatThemeController;
 import org.telegram.utils.code.highlight.CodeHighlighting;
 import org.telegram.messenger.ContactsController;
+import org.telegram.messenger.DeleteAllMessagesTask;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.DownloadController;
@@ -463,6 +464,7 @@ public class ChatActivity extends BaseFragment implements
     private RadialProgressView progressBar;
     private ActionBarMenuItem.Item addContactItem;
     private ActionBarMenuItem.Item clearHistoryItem;
+    private ActionBarMenuItem.Item deleteAllMineItem;
     private ActionBarMenuItem.Item viewAsTopics;
     private ActionBarMenuItem.Item closeTopicItem;
     private ActionBarMenuItem.Item openForumItem;
@@ -1706,6 +1708,8 @@ public class ChatActivity extends BaseFragment implements
     private final static int charge_fee = 72;
 
     private final static int chat_menu_topic_create = 73;
+
+    private final static int delete_all_mine = 75;
 
     private final static int id_chat_compose_panel = 1000;
 
@@ -3956,6 +3960,8 @@ public class ChatActivity extends BaseFragment implements
                     }
                 } else if (id == report) {
                     ReportBottomSheet.openChat(ChatActivity.this);
+                } else if (id == delete_all_mine) {
+                    DeleteAllMessagesTask.deleteMine(ChatActivity.this, currentChat, chatInfo);
                 } else if (id == star) {
                     for (int a = 0; a < 2; a++) {
                         for (int b = 0; b < selectedMessagesCanStarIds[a].size(); b++) {
@@ -4495,6 +4501,12 @@ public class ChatActivity extends BaseFragment implements
             if (!isTopic && !ChatObject.isMonoForum(currentChat)) {
                 clearHistoryItem = headerItem.lazilyAddSubItem(clear_history, R.drawable.msg_clear,
                     LocaleController.getString(UserObject.isBotForum(currentUser) ? R.string.ClearAllHistory : R.string.ClearHistory));
+            }
+            if (currentChat != null && chatMode == 0 && !isTopic) {
+                // my messages in this group, or my comments under this channel's posts
+                deleteAllMineItem = headerItem.lazilyAddSubItem(delete_all_mine, R.drawable.msg_delete,
+                    getString(ChatObject.isChannelAndNotMegaGroup(currentChat) ? R.string.DeleteAllMyComments : R.string.DeleteAllMyMessages));
+                deleteAllMineItem.setVisibility(DeleteAllMessagesTask.canDeleteMine(currentChat, chatInfo) ? View.VISIBLE : View.GONE);
             }
             boolean addedSettings = false;
             if (!isTopic) {
@@ -19276,6 +19288,9 @@ public class ChatActivity extends BaseFragment implements
         if (clearHistoryItem != null && chatInfo != null) {
             boolean visible = chatInfo.can_delete_channel || !ChatObject.isChannel(currentChat) || currentChat.megagroup && !ChatObject.isPublic(currentChat);
             clearHistoryItem.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        if (deleteAllMineItem != null) {
+            deleteAllMineItem.setVisibility(DeleteAllMessagesTask.canDeleteMine(currentChat, chatInfo) ? View.VISIBLE : View.GONE);
         }
         checkAndUpdateAvatar();
     }

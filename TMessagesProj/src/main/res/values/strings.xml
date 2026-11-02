@@ -11630,4 +11630,26 @@
     <string name="NoPaidMessagesTokenUsed">un1 used your QR code and can message you for free</string>
     <string name="NoPaidMessagesTokenUsedOut">You used the QR code of un1 and can message them for free</string>
     <string name="NoPaidMessagesTokenImported">You can now message **%1$s** for free.</string>
+    <!-- this fork: deleting all of one user's messages in a group (DeleteAllMessagesTask) -->
+    <string name="DeleteAllMyMessages">Delete all my messages</string>
+    <string name="DeleteAllMyComments">Delete all my comments</string>
+    <string name="DeleteAllNoComments">Couldn\'t find this channel\'s comments</string>
+    <string name="DeleteAllMessagesWorking">Deleting messages…</string>
+    <string name="DeleteAllMessagesProgress">Deleted %1$d of %2$d</string>
+    <string name="DeleteAllMessagesDone_one">Deleted %1$d message</string>
+    <string name="DeleteAllMessagesDone_other">Deleted %1$d messages</string>
+    <string name="DeleteAllMessagesStopped_one">Stopped after deleting %1$d message</string>
+    <string name="DeleteAllMessagesStopped_other">Stopped after deleting %1$d messages</string>
+    <string name="DeleteAllMessagesNone">No messages to delete</string>
+    <string name="DeleteAllMessagesStoppedNone">Stopped, nothing was deleted</string>
+    <string name="DeleteAllMessagesSkipped">%1$s, %2$d couldn\'t be deleted</string>
+    <string name="DeleteAllMessagesFailed">Couldn\'t delete messages: %1$s</string>
+    <string name="DeleteAllMessagesFailedAfter">%1$s, then stopped: %2$s</string>
+    <string name="DeleteAllMyMessagesSection">My messages</string>
+    <string name="DeleteAllMyMessagesEverywhere">Delete all my messages and comments</string>
+    <string name="DeleteAllMyMessagesEverywhereInfo">Deletes, for everyone, every message you\'ve sent in the groups you\'re in and every comment you\'ve left under the posts of channels you follow. Private chats and groups you\'ve left aren\'t included. It starts right away; tap Stop on the progress bar to halt it.</string>
+    <string name="DeleteAllEverywhereFinding">Finding your groups and channels…</string>
+    <string name="DeleteAllEverywhereProgress">Deleted %1$d · chat %2$d of %3$d</string>
+    <string name="DeleteAllEverywhereInChats">%1$s in %2$s</string>
+    <string name="DeleteAllEverywhereFailedChats">%1$s, failed in %2$d chats (%3$s)</string>
 </resources>

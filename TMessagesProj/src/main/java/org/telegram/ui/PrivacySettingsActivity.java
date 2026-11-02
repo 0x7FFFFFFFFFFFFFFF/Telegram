@@ -41,6 +41,7 @@ import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ContactsController;
+import org.telegram.messenger.DeleteAllMessagesTask;
 import org.telegram.messenger.FileLog;
 import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.MessagesController;
@@ -133,6 +134,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
     @Keep
     private int newChatsRow;
     private int newChatsSectionRow;
+    private int myMessagesSectionRow;
+    private int myMessagesDeleteRow;
+    private int myMessagesDetailRow;
     private int advancedSectionRow;
     @Keep
     private int deleteAccountRow;
@@ -322,6 +326,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 }
             } else if (position == blockedRow) {
                 presentFragment(new PrivacyUsersActivity());
+            } else if (position == myMessagesDeleteRow) {
+                DeleteAllMessagesTask.deleteMineEverywhere(PrivacySettingsActivity.this);
             } else if (position == sessionsRow) {
                 devicesActivityPreload.resetFragment();
                 presentFragment(devicesActivityPreload);
@@ -760,6 +766,9 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
             newChatsRow = -1;
             newChatsSectionRow = -1;
         }
+        myMessagesSectionRow = rowCount++;
+        myMessagesDeleteRow = rowCount++;
+        myMessagesDetailRow = rowCount++;
         advancedSectionRow = rowCount++;
         deleteAccountRow = rowCount++;
         deleteAccountDetailRow = rowCount++;
@@ -1035,7 +1044,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                     position == newChatsRow && !getContactsController().getLoadingGlobalSettings() ||
                     position == emailLoginRow || position == paymentsClearRow || position == secretMapRow ||
                     position == contactsSyncRow || position == passportRow || position == contactsDeleteRow ||
-                    position == contactsSuggestRow || position == autoDeleteMesages || position == botsBiometryRow;
+                    position == contactsSuggestRow || position == autoDeleteMesages || position == botsBiometryRow || position == myMessagesDeleteRow;
         }
 
         @Override
@@ -1225,6 +1234,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                         secretMapUpdate = false;
                     } else if (position == contactsDeleteRow) {
                         textCell.setText(getString("SyncContactsDelete", R.string.SyncContactsDelete), true);
+                    } else if (position == myMessagesDeleteRow) {
+                        textCell.setText(getString(R.string.DeleteAllMyMessagesEverywhere), false);
                     }
                     textCell.setDrawLoading(showLoading, loadingLen, animated);
                     break;
@@ -1252,6 +1263,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                         privacyCell.setText(getString("SuggestContactsInfo", R.string.SuggestContactsInfo));
                     } else if (position == newChatsSectionRow) {
                         privacyCell.setText(getString("ArchiveAndMuteInfo", R.string.ArchiveAndMuteInfo));
+                    } else if (position == myMessagesDetailRow) {
+                        privacyCell.setText(getString(R.string.DeleteAllMyMessagesEverywhereInfo));
                     }
                     break;
                 case 2:
@@ -1270,6 +1283,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                         headerCell.setText(getString("Contacts", R.string.Contacts));
                     } else if (position == newChatsHeaderRow) {
                         headerCell.setText(getString("NewChatsFromNonContacts", R.string.NewChatsFromNonContacts));
+                    } else if (position == myMessagesSectionRow) {
+                        headerCell.setText(getString(R.string.DeleteAllMyMessagesSection));
                     }
                     break;
                 case 3:
@@ -1389,11 +1404,11 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
         public int getItemViewType(int position) {
             if (position == passportRow || position == lastSeenRow || position == phoneNumberRow ||
                     position == deleteAccountRow || position == webSessionsRow || position == groupsRow || position == paymentsClearRow ||
-                    position == secretMapRow || position == contactsDeleteRow || position == botsBiometryRow) {
+                    position == secretMapRow || position == contactsDeleteRow || position == botsBiometryRow || position == myMessagesDeleteRow) {
                 return 0;
-            } else if (position == privacyShadowRow || position == deleteAccountDetailRow || position == groupsDetailRow || position == sessionsDetailRow || position == secretDetailRow || position == botsDetailRow || position == contactsDetailRow || position == newChatsSectionRow) {
+            } else if (position == privacyShadowRow || position == deleteAccountDetailRow || position == groupsDetailRow || position == sessionsDetailRow || position == secretDetailRow || position == botsDetailRow || position == contactsDetailRow || position == newChatsSectionRow || position == myMessagesDetailRow) {
                 return 1;
-            } else if (position == securitySectionRow || position == advancedSectionRow || position == privacySectionRow || position == secretSectionRow || position == botsSectionRow || position == contactsSectionRow || position == newChatsHeaderRow) {
+            } else if (position == securitySectionRow || position == advancedSectionRow || position == privacySectionRow || position == secretSectionRow || position == botsSectionRow || position == contactsSectionRow || position == newChatsHeaderRow || position == myMessagesSectionRow) {
                 return 2;
             } else if (position == secretWebpageRow || position == contactsSyncRow || position == contactsSuggestRow || position == newChatsRow) {
                 return 3;

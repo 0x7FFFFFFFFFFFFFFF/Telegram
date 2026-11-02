@@ -140,6 +140,7 @@ import org.telegram.messenger.BuildVars;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.ChatThemeController;
 import org.telegram.messenger.ContactsController;
+import org.telegram.messenger.DeleteAllMessagesTask;
 import org.telegram.messenger.DialogObject;
 import org.telegram.messenger.DocumentObject;
 import org.telegram.messenger.Emoji;
@@ -606,6 +607,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private final static int enable_no_forwards = 46;
     private final static int disable_no_forwards = 47;
     private final static int send_money = 48;
+    private final static int delete_all_mine = 49;
 
     private Rect rect = new Rect();
 
@@ -2615,6 +2617,8 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                 } else if (id == leave_group) {
                     leaveChatPressed(false);
+                } else if (id == delete_all_mine) {
+                    DeleteAllMessagesTask.deleteMine(ProfileActivity.this, currentChat, chatInfo);
                 } else if (id == delete_group) {
                     leaveChatPressed(true);
                 } else if (id == enable_no_forwards) {
@@ -7172,8 +7176,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     canEditTag = true;
                 }
             }
+            final boolean canDeleteAllMessages = !self && !isOwner && DeleteAllMessagesTask.canDeleteFrom(currentChat);
 
-            boolean result = (canEditAdmin || canEditTag || canRestrict || allowKick);
+            boolean result = (canEditAdmin || canEditTag || canRestrict || allowKick || canDeleteAllMessages);
             if (resultOnly || !result) {
                 return result;
             }
@@ -7197,7 +7202,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     .addIf(!self, R.drawable.msg_discussion, getString(R.string.SendMessage), () -> {
                         presentFragment(ChatActivity.of(user.id));
                     })
-                    .addGapIf(!self && (canEditAdmin || canEditTag || canRestrict || allowKick))
+                    .addGapIf(!self && (canEditAdmin || canEditTag || canRestrict || allowKick || canDeleteAllMessages))
                     .addIf(canEditTag, !isAdmin && TextUtils.isEmpty(rank) ? R.drawable.menu_tag_plus : R.drawable.menu_tag_edit, getString(isAdmin ? R.string.EditAdminTag : TextUtils.isEmpty(rank) ? R.string.AddMemberTag : R.string.EditMemberTag), () -> {
                         TagEditCell.showSheet(getContext(), currentAccount, getDialogId(), user, rank, isAdmin, isOwner, resourcesProvider);
                     })
@@ -7217,6 +7222,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     })
                     .addIf(allowKick, R.drawable.msg_remove, LocaleController.getString(R.string.KickFromGroup), true, () -> {
                         kickUser(selectedUser, participant);
+                    })
+                    .addIf(canDeleteAllMessages, R.drawable.msg_delete, formatString(R.string.DeleteAllMessagesFrom, UserObject.getFirstName(user)), true, () -> {
+                        DeleteAllMessagesTask.deleteFrom(ProfileActivity.this, currentChat, user);
                     })
                     .setMinWidth(190)
                     .show();
@@ -12300,6 +12308,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     if (topicId == 0) {
                         otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
                     }
+                    if (topicId == 0 && DeleteAllMessagesTask.canDeleteMine(chat, chatInfo)) {
+                        otherItem.addSubItem(delete_all_mine, R.drawable.msg_delete, getString(R.string.DeleteAllMyMessages));
+                    }
                     if (chat.creator) {
                         otherItem.addColoredGap();
                         otherItem.addSubItem(leave_group, R.drawable.msg_leave, getString(R.string.LeaveMega));
@@ -12329,6 +12340,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     }
                     if (topicId == 0) {
                         otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                    }
+                    if (DeleteAllMessagesTask.canDeleteMine(chat, chatInfo)) {
+                        otherItem.addSubItem(delete_all_mine, R.drawable.msg_delete, getString(R.string.DeleteAllMyComments));
                     }
                     if (currentChat.creator) {
                         otherItem.addColoredGap();
@@ -12365,6 +12379,9 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                 }
                 if (topicId == 0) {
                     otherItem.addSubItem(add_shortcut, R.drawable.msg_home, LocaleController.getString(R.string.AddShortcut));
+                }
+                if (DeleteAllMessagesTask.canDeleteMine(chat, chatInfo)) {
+                    otherItem.addSubItem(delete_all_mine, R.drawable.msg_delete, getString(R.string.DeleteAllMyMessages));
                 }
                 otherItem.addSubItem(leave_group, R.drawable.msg_leave, LocaleController.getString(R.string.DeleteAndExit));
                 leaveAction = true;
