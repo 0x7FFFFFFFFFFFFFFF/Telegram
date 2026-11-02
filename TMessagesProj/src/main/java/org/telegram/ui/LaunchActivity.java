@@ -187,6 +187,7 @@ import org.telegram.ui.Components.EmojiPacksAlert;
 import org.telegram.ui.Components.FireworksOverlay;
 import org.telegram.ui.Components.FloatingDebug.FloatingDebugController;
 import org.telegram.ui.Components.FolderBottomSheet;
+import org.telegram.ui.Components.ForegroundDetector;
 import org.telegram.ui.Components.Forum.ForumUtilities;
 import org.telegram.ui.Components.GroupCallPip;
 import org.telegram.ui.Components.JoinGroupAlert;
@@ -387,6 +388,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     };
 
     private FlagSecureReason flagSecureReason;
+    // this fork: with immediate auto-lock the task switcher gets no picture of the app (see updateRecentsScreenshot)
+    private FlagSecureReason pausedFlagSecureReason;
+    private boolean recentsScreenshotDisabled;
     private final LiteMode.BatteryReceiver batteryReceiver = new LiteMode.BatteryReceiver();
     private WindowAnimatedInsetsProvider rootAnimatedInsetsListener;
 
@@ -451,8 +455,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
         flagSecureReason = new FlagSecureReason(getWindow(), () -> SharedConfig.passcodeHash.length() > 0 && !SharedConfig.allowScreenCapture);
         flagSecureReason.attach();
+        pausedFlagSecureReason = new FlagSecureReason(getWindow(), () -> Build.VERSION.SDK_INT < 33 && !isResumed && SharedConfig.isAutoLockImmediately());
+        pausedFlagSecureReason.attach();
 
         super.onCreate(savedInstanceState);
+        updateRecentsScreenshot();
         if (Build.VERSION.SDK_INT >= 24) {
             AndroidUtilities.isInMultiwindow = isInMultiWindowMode();
         }
@@ -6911,6 +6918,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     protected void onPause() {
         super.onPause();
         isResumed = false;
+        pausedFlagSecureReason.invalidate();
         pipActivityHandler.onPause();
         NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.stopAllHeavyOperations, 4096);
         ApplicationLoader.mainInterfacePaused = true;
@@ -6983,6 +6991,12 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         GroupCallPip.updateVisibility(this);
         if (GroupCallActivity.groupCallInstance != null) {
             GroupCallActivity.groupCallInstance.onPause();
+        }
+        // immediate auto-lock: the app locks the moment it's out of sight (not a second later, as the lock check in
+        // onPasscodePause does), so whatever brings it back starts on the passcode screen
+        if (SharedConfig.isAutoLockImmediately() && !SharedConfig.isWaitingForPasscodeEnter && !isChangingConfigurations() &&
+                ForegroundDetector.getInstance() != null && ForegroundDetector.getInstance().isBackground()) {
+            showPasscodeActivity(true, false, -1, -1, null, null);
         }
     }
 
@@ -7086,6 +7100,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         if (flagSecureReason != null) {
             flagSecureReason.detach();
         }
+        if (pausedFlagSecureReason != null) {
+            pausedFlagSecureReason.detach();
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && frameMetricsOverlayView != null) {
             frameMetricsOverlayView.detach();
@@ -7149,6 +7166,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
     protected void onResume() {
         super.onResume();
         isResumed = true;
+        pausedFlagSecureReason.invalidate();
+        updateRecentsScreenshot();
         pipActivityHandler.onResume();
         if (onResumeStaticCallback != null) {
             onResumeStaticCallback.run();
@@ -7488,6 +7507,8 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             }
         } else if (id == NotificationCenter.didSetPasscode) {
             flagSecureReason.invalidate();
+            pausedFlagSecureReason.invalidate();
+            updateRecentsScreenshot();
         } else if (id == NotificationCenter.reloadInterface) {
             boolean last = mainFragmentsStack.size() > 1 && mainFragmentsStack.get(mainFragmentsStack.size() - 1) instanceof ProfileActivity;
             if (last) {
@@ -7739,7 +7760,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 onThemeLoadFinish();
             }
         } else if (id == NotificationCenter.screenStateChanged) {
-            if (!ApplicationLoader.isScreenOn && SharedConfig.autoLockIn == SharedConfig.AUTO_LOCK_IMMEDIATELY && SharedConfig.passcodeHash.length() != 0 && !SharedConfig.isWaitingForPasscodeEnter) {
+            if (!ApplicationLoader.isScreenOn && SharedConfig.isAutoLockImmediately() && !SharedConfig.isWaitingForPasscodeEnter) {
                 // immediate auto-lock: the screen turning off locks right away, even if the app isn't sent to the background
                 showPasscodeActivity(true, false, -1, -1, null, null);
             }
@@ -8369,6 +8390,17 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             SharedConfig.lastPauseTime = 0;
         }
         SharedConfig.saveConfig();
+    }
+
+    // with immediate auto-lock the task switcher shows no screenshot of the app, only its blank window. Android 13+
+    // can leave the screenshot out; before that pausedFlagSecureReason keeps the window secure while the app isn't
+    // in front, which also blanks the screenshot
+    private void updateRecentsScreenshot() {
+        final boolean disable = SharedConfig.isAutoLockImmediately();
+        if (Build.VERSION.SDK_INT >= 33 && disable != recentsScreenshotDisabled) {
+            recentsScreenshotDisabled = disable;
+            setRecentsScreenshotEnabled(!disable);
+        }
     }
 
     public void addOverlayPasscodeView(PasscodeView overlay) {

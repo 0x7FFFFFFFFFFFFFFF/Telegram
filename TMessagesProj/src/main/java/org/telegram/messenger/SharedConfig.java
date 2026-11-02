@@ -843,6 +843,10 @@ public class SharedConfig {
         return Math.max(0, autoLockIn);
     }
 
+    public static boolean isAutoLockImmediately() {
+        return passcodeHash.length() > 0 && autoLockIn == AUTO_LOCK_IMMEDIATELY;
+    }
+
     public static boolean checkPasscode(String passcode) {
         if (passcodeSalt.length == 0) {
             boolean result = Utilities.MD5(passcode).equals(passcodeHash);

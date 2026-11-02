@@ -366,6 +366,8 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                             }
                             listAdapter.notifyItemChanged(position);
                             UserConfig.getInstance(currentAccount).saveConfig(false);
+                            // LaunchActivity hides the app from the task switcher with immediate auto-lock
+                            NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode, false);
                         });
                         showDialog(builder.create());
                     } else if (position == fingerprintRow) {
