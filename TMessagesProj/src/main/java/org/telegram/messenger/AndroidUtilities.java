@@ -3482,7 +3482,7 @@ public class AndroidUtilities {
         }
         return SharedConfig.passcodeHash.length() > 0 && wasInBackground &&
                 (SharedConfig.appLocked ||
-                        SharedConfig.autoLockIn != 0 && SharedConfig.lastPauseTime != 0 && !SharedConfig.appLocked && (SharedConfig.lastPauseTime + SharedConfig.autoLockIn) <= uptime ||
+                        SharedConfig.autoLockIn != 0 && SharedConfig.lastPauseTime != 0 && !SharedConfig.appLocked && (SharedConfig.lastPauseTime + SharedConfig.getAutoLockSeconds()) <= uptime ||
                         uptime + 5 < SharedConfig.lastPauseTime);
     }
 

@@ -202,7 +202,7 @@ public class TelegramMediaSession {
         final int uptime = (int) (SystemClock.elapsedRealtime() / 1000);
         return SharedConfig.passcodeHash.length() > 0 && (
                 SharedConfig.appLocked
-                        || SharedConfig.autoLockIn != 0 && SharedConfig.lastPauseTime != 0 && (SharedConfig.lastPauseTime + SharedConfig.autoLockIn) <= uptime
+                        || SharedConfig.autoLockIn != 0 && SharedConfig.lastPauseTime != 0 && (SharedConfig.lastPauseTime + SharedConfig.getAutoLockSeconds()) <= uptime
                         || uptime + 5 < SharedConfig.lastPauseTime
         );
     }

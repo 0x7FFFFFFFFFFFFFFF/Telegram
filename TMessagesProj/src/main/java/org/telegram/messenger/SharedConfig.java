@@ -236,6 +236,9 @@ public class SharedConfig {
     public static byte[] passcodeSalt = new byte[0];
     public static boolean appLocked;
     public static int autoLockIn = 60 * 60;
+    // this fork: an autoLockIn that locks as soon as the app leaves the screen (another app, the home screen,
+    // the screen turning off)
+    public static final int AUTO_LOCK_IMMEDIATELY = -1;
 
     public static boolean saveIncomingPhotos;
     public static boolean allowScreenCapture;
@@ -833,6 +836,11 @@ public class SharedConfig {
             }
         }
         return true;
+    }
+
+    // seconds away before the app locks, 0 for AUTO_LOCK_IMMEDIATELY; only meaningful when autoLockIn != 0
+    public static int getAutoLockSeconds() {
+        return Math.max(0, autoLockIn);
     }
 
     public static boolean checkPasscode(String passcode) {

@@ -11660,4 +11660,6 @@
     <string name="DeleteAllFailedServiceInfo">In supergroups only admins can delete service messages like these, so they were left alone.</string>
     <string name="DeleteAllFailedRefused">Refused by Telegram</string>
     <string name="DeleteAllFailedRefusedInfo">Telegram answered %1$s when deleting these.</string>
+    <!-- this fork: passcode auto-lock as soon as the app leaves the screen -->
+    <string name="AutoLockImmediately">Immediately</string>
 </resources>

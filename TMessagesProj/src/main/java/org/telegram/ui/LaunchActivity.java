@@ -7739,6 +7739,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                 onThemeLoadFinish();
             }
         } else if (id == NotificationCenter.screenStateChanged) {
+            if (!ApplicationLoader.isScreenOn && SharedConfig.autoLockIn == SharedConfig.AUTO_LOCK_IMMEDIATELY && SharedConfig.passcodeHash.length() != 0 && !SharedConfig.isWaitingForPasscodeEnter) {
+                // immediate auto-lock: the screen turning off locks right away, even if the app isn't sent to the background
+                showPasscodeActivity(true, false, -1, -1, null, null);
+            }
             if (ApplicationLoader.mainInterfacePaused) {
                 return;
             }
@@ -8355,10 +8359,11 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
                     FileLog.d("schedule app lock in " + 1000);
                 }
             } else if (SharedConfig.autoLockIn != 0) {
+                // with immediate locking the check runs a second after leaving, by when the app is in the background
                 if (BuildVars.LOGS_ENABLED) {
-                    FileLog.d("schedule app lock in " + (((long) SharedConfig.autoLockIn) * 1000 + 1000));
+                    FileLog.d("schedule app lock in " + (((long) SharedConfig.getAutoLockSeconds()) * 1000 + 1000));
                 }
-                AndroidUtilities.runOnUIThread(lockRunnable, ((long) SharedConfig.autoLockIn) * 1000 + 1000);
+                AndroidUtilities.runOnUIThread(lockRunnable, ((long) SharedConfig.getAutoLockSeconds()) * 1000 + 1000);
             }
         } else {
             SharedConfig.lastPauseTime = 0;
