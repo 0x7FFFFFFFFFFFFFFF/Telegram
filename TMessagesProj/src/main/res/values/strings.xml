@@ -11647,9 +11647,17 @@
     <string name="DeleteAllMessagesFailedAfter">%1$s, then stopped: %2$s</string>
     <string name="DeleteAllMyMessagesSection">My messages</string>
     <string name="DeleteAllMyMessagesEverywhere">Delete all my messages and comments</string>
-    <string name="DeleteAllMyMessagesEverywhereInfo">Deletes, for everyone, every message you\'ve sent in the groups you\'re in and every comment you\'ve left under the posts of channels you follow. Private chats and groups you\'ve left aren\'t included. It starts right away; tap Stop on the progress bar to halt it.</string>
-    <string name="DeleteAllEverywhereFinding">Finding your groups and channels…</string>
+    <string name="DeleteAllMyMessagesEverywhereInfo">Deletes, for everyone, every message you\'ve sent in your private chats and in the groups you\'re in, and every comment you\'ve left under the posts of channels you follow. Saved Messages, secret chats and groups you\'ve left aren\'t included. It starts right away; tap Stop on the progress bar to halt it. Messages that couldn\'t be deleted are listed when it ends.</string>
+    <string name="DeleteAllEverywhereFinding">Finding your chats…</string>
     <string name="DeleteAllEverywhereProgress">Deleted %1$d · chat %2$d of %3$d</string>
     <string name="DeleteAllEverywhereInChats">%1$s in %2$s</string>
     <string name="DeleteAllEverywhereFailedChats">%1$s, failed in %2$d chats (%3$s)</string>
+    <string name="DeleteAllFailedTitle">Not deleted</string>
+    <string name="DeleteAllFailedResult">%1$s. Tap a message to open it in its chat.</string>
+    <string name="DeleteAllFailedChats">Chats that failed</string>
+    <string name="DeleteAllFailedChatsInfo">Searching or deleting stopped with an error in these chats, so some of your messages may be left there. The error is under each name.</string>
+    <string name="DeleteAllFailedService">Service messages</string>
+    <string name="DeleteAllFailedServiceInfo">In supergroups only admins can delete service messages like these, so they were left alone.</string>
+    <string name="DeleteAllFailedRefused">Refused by Telegram</string>
+    <string name="DeleteAllFailedRefusedInfo">Telegram answered %1$s when deleting these.</string>
 </resources>

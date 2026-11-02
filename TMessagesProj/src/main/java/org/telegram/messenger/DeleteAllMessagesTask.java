@@ -15,6 +15,7 @@ import org.telegram.ui.ChatActivity;
 import org.telegram.ui.Components.AvatarDrawable;
 import org.telegram.ui.Components.Bulletin;
 import org.telegram.ui.Components.BulletinFactory;
+import org.telegram.ui.DeleteAllFailedActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
@@ -29,14 +30,18 @@ import java.util.LinkedHashMap;
 // group, which holds the channel's comments, and a group upgraded from a basic group also gets the old
 // group's messages deleted. An admin deleting another member's messages in a supergroup uses
 // channels.deleteParticipantHistory instead, which the server runs in bulk.
-// The "everywhere" task does this for my messages in every group I'm in and under every channel I follow: it
-// lists my chats with messages.getAllChats (plus the loaded chat list), looks up the channels' discussion
-// groups, and then works through them one by one; a chat that fails is counted and skipped.
+// The "everywhere" task does this for my messages in every group I'm in, under every channel I follow and in
+// every private chat: it lists my groups and channels with messages.getAllChats and my private chats with
+// messages.getDialogs (plus the loaded chat list for both), looks up the channels' discussion groups, and then
+// works through them one by one; a chat that fails is counted and skipped.
+// What couldn't be deleted, the messages and the chats that failed, is listed at the end (DeleteAllFailedActivity).
 public class DeleteAllMessagesTask {
 
     private static final int PAGE_SIZE = 100;
     // messages.getAllChats pages by leaving out the chats it already sent; this caps a slice that never ends
     private static final int MAX_CHAT_LIST_REQUESTS = 20;
+    // pages of the chat list (100 chats each) looked through for private chats
+    private static final int MAX_DIALOG_LIST_REQUESTS = 200;
 
     // by account, chat and author, so tapping the menu item again shows the running task instead of starting another
     private static final HashMap<String, DeleteAllMessagesTask> tasks = new HashMap<>();
@@ -56,11 +61,20 @@ public class DeleteAllMessagesTask {
     private int chatListRequests;
     private final LinkedHashMap<Long, TLRPC.Chat> listedChats = new LinkedHashMap<>();
     private final ArrayDeque<TLRPC.Chat> channelsToResolve = new ArrayDeque<>();
+    // and pages through the chat list for private chats: the pinned chats of the main list and of the archive
+    // (steps 0 and 1), which the pages leave out, then the main list and the archive (steps 2 and 3)
+    private boolean listingDialogs;
+    private int dialogListStep, dialogListRequests;
+    private int dialogListOffsetId, dialogListOffsetDate;
+    private TLRPC.InputPeer dialogListOffsetPeer;
 
     private int dialogIndex;
     private int offsetId;
     // pages of ids found in dialogIds[dialogIndex] and not deleted yet
     private final ArrayDeque<ArrayList<Integer>> batches = new ArrayDeque<>();
+    // the messages of those pages by id, until they're deleted
+    private final HashMap<Integer, TLRPC.Message> pageMessages = new HashMap<>();
+    private final ArrayList<Failure> failures = new ArrayList<>();
     private int total, deleted, skipped;
     private int deletedInDialog, chatsCleaned, chatsFailed;
     private String lastChatError;
@@ -72,6 +86,20 @@ public class DeleteAllMessagesTask {
     private Bulletin bulletin;
     private Bulletin.ProgressLayout bulletinLayout;
     private WeakReference<BaseFragment> fragmentRef;
+
+    // a message that couldn't be deleted, or a chat the task couldn't go through (no message)
+    public static class Failure {
+        public final long dialogId;
+        public final TLRPC.Message message;
+        // the server's error; null for a service message Telegram doesn't let me delete, which isn't sent at all
+        public final String error;
+
+        private Failure(long dialogId, TLRPC.Message message, String error) {
+            this.dialogId = dialogId;
+            this.message = message;
+            this.error = error;
+        }
+    }
 
     // groups: my messages; a channel: my comments, if it has a discussion group
     public static boolean canDeleteMine(TLRPC.Chat chat, TLRPC.ChatFull chatFull) {
@@ -99,7 +127,7 @@ public class DeleteAllMessagesTask {
         }
     }
 
-    // my messages in every group I'm in, and my comments under every channel I follow
+    // my messages in every group I'm in and every private chat, and my comments under every channel I follow
     public static void deleteMineEverywhere(BaseFragment fragment) {
         if (fragment == null) {
             return;
@@ -110,6 +138,7 @@ public class DeleteAllMessagesTask {
         if (task == null) {
             task = new DeleteAllMessagesTask(currentAccount, key, null, null, true);
             task.listingChats = true;
+            task.listingDialogs = true;
             tasks.put(key, task);
             task.next();
         }
@@ -183,6 +212,10 @@ public class DeleteAllMessagesTask {
         }
         if (listingChats) {
             listChats();
+            return;
+        }
+        if (listingDialogs) {
+            listDialogs();
             return;
         }
         while (!channelsToResolve.isEmpty()) {
@@ -279,6 +312,96 @@ public class DeleteAllMessagesTask {
         }
     }
 
+    private void listDialogs() {
+        final TLObject request;
+        if (dialogListStep < 2) {
+            final TLRPC.TL_messages_getPinnedDialogs req = new TLRPC.TL_messages_getPinnedDialogs();
+            req.folder_id = dialogListStep;
+            request = req;
+        } else {
+            final TLRPC.TL_messages_getDialogs req = new TLRPC.TL_messages_getDialogs();
+            req.exclude_pinned = true;
+            req.flags |= 2;
+            req.folder_id = dialogListStep - 2;
+            req.offset_id = dialogListOffsetId;
+            req.offset_date = dialogListOffsetDate;
+            req.offset_peer = dialogListOffsetPeer != null ? dialogListOffsetPeer : new TLRPC.TL_inputPeerEmpty();
+            req.limit = PAGE_SIZE;
+            request = req;
+        }
+        deleting = false;
+        reqId = getConnectionsManager().sendRequest(request, (response, error) -> AndroidUtilities.runOnUIThread(() -> {
+            reqId = 0;
+            if (finished) {
+                return;
+            }
+            dialogListRequests++;
+            ArrayList<TLRPC.Dialog> dialogs = null;
+            ArrayList<TLRPC.Message> messages = null;
+            boolean slice = false;
+            if (response instanceof TLRPC.messages_Dialogs) {
+                final TLRPC.messages_Dialogs res = (TLRPC.messages_Dialogs) response;
+                getMessagesController().putUsers(res.users, false);
+                getMessagesController().putChats(res.chats, false);
+                dialogs = res.dialogs;
+                messages = res.messages;
+                slice = res instanceof TLRPC.TL_messages_dialogsSlice;
+            } else if (response instanceof TLRPC.TL_messages_peerDialogs) {
+                final TLRPC.TL_messages_peerDialogs res = (TLRPC.TL_messages_peerDialogs) response;
+                getMessagesController().putUsers(res.users, false);
+                getMessagesController().putChats(res.chats, false);
+                dialogs = res.dialogs;
+            }
+            if (dialogs != null) {
+                for (int i = 0; i < dialogs.size(); ++i) {
+                    final TLRPC.Dialog dialog = dialogs.get(i);
+                    if (!(dialog instanceof TLRPC.TL_dialogFolder) && dialog.peer != null && dialog.peer.user_id != 0) {
+                        addPrivateChat(dialog.peer.user_id);
+                    }
+                }
+            }
+            // the chats are sorted by their last message, and the next page starts after this page's oldest one
+            TLRPC.Message oldest = null;
+            if (messages != null) {
+                for (int i = 0; i < messages.size(); ++i) {
+                    final TLRPC.Message message = messages.get(i);
+                    if (message != null && message.date != 0 && (oldest == null || message.date < oldest.date)) {
+                        oldest = message;
+                    }
+                }
+            }
+            if (slice && oldest != null && (oldest.id != dialogListOffsetId || oldest.date != dialogListOffsetDate) && dialogListRequests < MAX_DIALOG_LIST_REQUESTS) {
+                dialogListOffsetId = oldest.id;
+                dialogListOffsetDate = oldest.date;
+                dialogListOffsetPeer = getMessagesController().getInputPeer(MessageObject.getDialogId(oldest));
+            } else {
+                // without an answer this step is passed over; the loaded chat list fills in what it can
+                dialogListStep++;
+                dialogListOffsetId = 0;
+                dialogListOffsetDate = 0;
+                dialogListOffsetPeer = null;
+                if (dialogListStep > 3) {
+                    listingDialogs = false;
+                    final ArrayList<TLRPC.Dialog> loaded = getMessagesController().getAllDialogs();
+                    for (int i = 0; i < loaded.size(); ++i) {
+                        if (DialogObject.isUserDialog(loaded.get(i).id)) {
+                            addPrivateChat(loaded.get(i).id);
+                        }
+                    }
+                }
+            }
+            updateBulletin();
+            next();
+        }));
+    }
+
+    private void addPrivateChat(long userId) {
+        // Saved Messages are mine alone, and the replies bot only holds copies of other people's replies
+        if (userId != UserConfig.getInstance(currentAccount).getClientUserId() && !UserObject.isReplyUser(userId)) {
+            addDialog(userId);
+        }
+    }
+
     private void loadDiscussionGroup(TLRPC.Chat channel) {
         final TLRPC.TL_channels_getFullChannel req = new TLRPC.TL_channels_getFullChannel();
         req.channel = MessagesController.getInputChannel(channel);
@@ -323,6 +446,9 @@ public class DeleteAllMessagesTask {
                 return;
             }
             final TLRPC.messages_Messages res = (TLRPC.messages_Messages) response;
+            // the senders and chats of messages that end up in the list of ones that couldn't be deleted
+            getMessagesController().putUsers(res.users, false);
+            getMessagesController().putChats(res.chats, false);
             if (offsetId == 0) {
                 total += Math.max(res.count, res.messages.size());
             }
@@ -337,7 +463,11 @@ public class DeleteAllMessagesTask {
                 minId = Math.min(minId, message.id);
                 if (!MessageObject.canDeleteMessage(currentAccount, false, message, dialogChat)) {
                     skipped++;
-                } else if (message instanceof TLRPC.TL_messageService) {
+                    failures.add(new Failure(dialogId, message, null));
+                    continue;
+                }
+                pageMessages.put(message.id, message);
+                if (message instanceof TLRPC.TL_messageService) {
                     serviceIds.add(message.id);
                 } else {
                     ids.add(message.id);
@@ -393,6 +523,9 @@ public class DeleteAllMessagesTask {
                 if (error == null) {
                     deleted += ids.size();
                     deletedInDialog += ids.size();
+                    for (int i = 0; i < ids.size(); ++i) {
+                        pageMessages.remove(ids.get(i));
+                    }
                     // gone on the server; now remove them from the cache and from an open chat
                     getMessagesController().deleteMessages(ids, null, null, dialogId, 0, true, ChatActivity.MODE_DEFAULT, true);
                 } else if (isPerMessageError(error)) {
@@ -403,6 +536,10 @@ public class DeleteAllMessagesTask {
                         batches.addFirst(new ArrayList<>(ids.subList(0, half)));
                     } else {
                         skipped++;
+                        final TLRPC.Message message = pageMessages.remove(ids.get(0));
+                        if (message != null) {
+                            failures.add(new Failure(dialogId, message, error.text));
+                        }
                     }
                 } else {
                     chatFailed(error.text);
@@ -459,11 +596,15 @@ public class DeleteAllMessagesTask {
         dialogIndex++;
         offsetId = 0;
         batches.clear();
+        pageMessages.clear();
         participantCacheCleared = false;
     }
 
     // a failed chat ends a one-chat task; the everywhere task notes it and goes on with the next chat
     private void chatFailed(String error) {
+        if (dialogIndex < dialogIds.size()) {
+            failures.add(new Failure(dialogIds.get(dialogIndex), null, error));
+        }
         if (!everywhere) {
             finish(error);
             return;
@@ -505,37 +646,54 @@ public class DeleteAllMessagesTask {
             bulletin = null;
             bulletinLayout = null;
         }
+        final String text = getResultText(error);
+        // what couldn't be deleted opens as a list, with the result on top; a one-chat task whose chat failed
+        // outright only says so in the bulletin
+        if (hasListedFailures() && DeleteAllFailedActivity.open(currentAccount, text, failures)) {
+            return;
+        }
         // the result goes where the progress was if that screen is still in front (on a tablet the chat is
         // in the right pane, which global() doesn't look at), otherwise on whatever screen is
         final BaseFragment fragment = fragmentRef != null ? fragmentRef.get() : null;
         final boolean sameScreen = fragment != null && !fragment.isPaused() && fragment.isLastFragment() && BulletinFactory.canShowBulletin(fragment);
         final BulletinFactory factory = sameScreen ? BulletinFactory.of(fragment) : BulletinFactory.global();
-        final Bulletin result;
-        if (error != null) {
-            String text = formatString(R.string.DeleteAllMessagesFailed, error);
-            if (deleted > 0) {
-                text = formatString(R.string.DeleteAllMessagesFailedAfter, formatPluralString("DeleteAllMessagesDone", deleted), error);
-            }
-            result = factory.createErrorBulletin(text);
-        } else {
-            String text;
-            if (deleted == 0 && skipped == 0 && chatsFailed == 0) {
-                text = getString(cancelled ? R.string.DeleteAllMessagesStoppedNone : R.string.DeleteAllMessagesNone);
-            } else {
-                text = formatPluralString(cancelled ? "DeleteAllMessagesStopped" : "DeleteAllMessagesDone", deleted);
-                if (everywhere && chatsCleaned > 0) {
-                    text = formatString(R.string.DeleteAllEverywhereInChats, text, formatPluralString("Chats", chatsCleaned));
-                }
-                if (skipped > 0) {
-                    text = formatString(R.string.DeleteAllMessagesSkipped, text, skipped);
-                }
-                if (chatsFailed > 0) {
-                    text = formatString(R.string.DeleteAllEverywhereFailedChats, text, chatsFailed, lastChatError);
-                }
-            }
-            result = factory.createSimpleBulletinDetail(R.raw.ic_delete, text);
-        }
+        final Bulletin result = error != null ? factory.createErrorBulletin(text) : factory.createSimpleBulletinDetail(R.raw.ic_delete, text);
         result.setDuration(Bulletin.DURATION_PROLONG).show();
+    }
+
+    private String getResultText(String error) {
+        if (error != null) {
+            if (deleted > 0) {
+                return formatString(R.string.DeleteAllMessagesFailedAfter, formatPluralString("DeleteAllMessagesDone", deleted), error);
+            }
+            return formatString(R.string.DeleteAllMessagesFailed, error);
+        }
+        if (deleted == 0 && skipped == 0 && chatsFailed == 0) {
+            return getString(cancelled ? R.string.DeleteAllMessagesStoppedNone : R.string.DeleteAllMessagesNone);
+        }
+        String text = formatPluralString(cancelled ? "DeleteAllMessagesStopped" : "DeleteAllMessagesDone", deleted);
+        if (everywhere && chatsCleaned > 0) {
+            text = formatString(R.string.DeleteAllEverywhereInChats, text, formatPluralString("Chats", chatsCleaned));
+        }
+        if (skipped > 0) {
+            text = formatString(R.string.DeleteAllMessagesSkipped, text, skipped);
+        }
+        if (chatsFailed > 0) {
+            text = formatString(R.string.DeleteAllEverywhereFailedChats, text, chatsFailed, lastChatError);
+        }
+        return text;
+    }
+
+    private boolean hasListedFailures() {
+        if (everywhere) {
+            return !failures.isEmpty();
+        }
+        for (int i = 0; i < failures.size(); ++i) {
+            if (failures.get(i).message != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void showBulletin(BaseFragment fragment) {
@@ -571,7 +729,7 @@ public class DeleteAllMessagesTask {
     }
 
     private boolean isFindingChats() {
-        return listingChats || !channelsToResolve.isEmpty();
+        return listingChats || listingDialogs || !channelsToResolve.isEmpty();
     }
 
     private CharSequence getProgressText() {
