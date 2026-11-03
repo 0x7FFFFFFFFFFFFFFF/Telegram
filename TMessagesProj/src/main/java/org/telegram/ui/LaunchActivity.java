@@ -163,6 +163,7 @@ import org.telegram.tgnet.tl.TL_stories;
 import org.telegram.ui.ActionBar.ActionBarLayout;
 import org.telegram.ui.ActionBar.AlertDialog;
 import org.telegram.ui.ActionBar.BaseFragment;
+import org.telegram.ui.ActionBar.BottomSheet;
 import org.telegram.ui.ActionBar.BottomSheetTabs;
 import org.telegram.ui.ActionBar.BottomSheetTabsOverlay;
 import org.telegram.ui.ActionBar.DrawerLayoutContainer;
@@ -465,6 +466,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         Theme.createCommonChatResources();
         Theme.createDialogsResources(this);
+        if (SharedConfig.fakeModeActive && SharedConfig.hasFakePasscode()) {
+            // this fork: the app was left in fake mode; it starts locked, so a passcode decides which chats open
+            SharedConfig.appLocked = true;
+        }
         if (SharedConfig.passcodeHash.length() != 0 && SharedConfig.appLocked) {
             SharedConfig.lastPauseTime = (int) (SystemClock.elapsedRealtime() / 1000);
         }
@@ -1480,6 +1485,15 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         SharedConfig.isWaitingForPasscodeEnter = true;
         PasscodeView.PasscodeViewDelegate delegate = view -> {
             SharedConfig.isWaitingForPasscodeEnter = false;
+            // this fork: the fake passcode opens the fake chats and the real one the real chats; a fingerprint keeps
+            // whichever was open
+            final boolean fake = SharedConfig.fakeModeActive && SharedConfig.hasFakePasscode();
+            if (fake != isShowingFakeChats()) {
+                setFakeChatsShown(fake);
+            }
+            if (fake) {
+                passcodeSaveIntent = null;
+            }
             if (passcodeSaveIntent != null) {
                 handleIntent(passcodeSaveIntent, passcodeSaveIntentIsNew, passcodeSaveIntentIsRestore, true, null, false, true);
                 passcodeSaveIntent = null;
@@ -1513,6 +1527,38 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
     }
 
+    private boolean isShowingFakeChats() {
+        return !mainFragmentsStack.isEmpty() && mainFragmentsStack.get(0) instanceof FakeChatsActivity;
+    }
+
+    // this fork: fake mode replaces every screen with FakeChatsActivity, closing the real ones so nothing of the
+    // account can be reached from it; leaving fake mode starts over from the real main screen
+    private void setFakeChatsShown(boolean fake) {
+        // screens opened as sheets over everything
+        for (INavigationLayout sheetLayout : new ArrayList<>(sheetFragmentsStack)) {
+            final BottomSheet sheet = sheetLayout.getBottomSheet();
+            if (sheet != null) {
+                sheet.dismiss();
+            }
+        }
+        if (AndroidUtilities.isTablet()) {
+            layersActionBarLayout.removeAllFragments();
+            rightActionBarLayout.removeAllFragments();
+            if (!tabletFullSize) {
+                backgroundTablet.setVisibility(View.VISIBLE);
+                rightActionBarLayout.getView().setVisibility(View.GONE);
+            }
+            layersActionBarLayout.getView().setVisibility(View.GONE);
+        }
+        actionBarLayout.removeAllFragments();
+        actionBarLayout.addFragmentToStack(fake ? new FakeChatsActivity() : new MainTabsActivity(), INavigationLayout.FORCE_ATTACH_VIEW_AS_FIRST);
+        actionBarLayout.rebuildFragments(INavigationLayout.REBUILD_FLAG_REBUILD_LAST);
+        if (AndroidUtilities.isTablet()) {
+            layersActionBarLayout.rebuildFragments(INavigationLayout.REBUILD_FLAG_REBUILD_LAST);
+            rightActionBarLayout.rebuildFragments(INavigationLayout.REBUILD_FLAG_REBUILD_LAST);
+        }
+    }
+
     public boolean allowShowFingerprintDialog(PasscodeView passcodeView) {
         return overlayPasscodeViews.isEmpty() && this.passcodeDialog != null ? passcodeView == this.passcodeDialog.passcodeView : overlayPasscodeViews.get(overlayPasscodeViews.size() - 1) == passcodeView;
     }
@@ -1523,6 +1569,14 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @SuppressLint("Range")
     private boolean handleIntent(Intent intent, boolean isNew, boolean restore, boolean fromPassword, Browser.Progress progress, boolean rebuildFragments, boolean openedTelegram) {
+        if (SharedConfig.fakeModeActive && SharedConfig.hasFakePasscode()) {
+            // this fork: in fake mode nothing from outside (a notification, a link, a share) may open the account;
+            // the intent is dropped, and only the lock screen is shown if it's due
+            if (!fromPassword && (AndroidUtilities.needShowPasscode(true) || SharedConfig.isWaitingForPasscodeEnter)) {
+                showPasscodeActivity(true, false, -1, -1, null, null);
+            }
+            return false;
+        }
         if (GiftInfoBottomSheet.handleIntent(intent, progress)) {
             return true;
         }

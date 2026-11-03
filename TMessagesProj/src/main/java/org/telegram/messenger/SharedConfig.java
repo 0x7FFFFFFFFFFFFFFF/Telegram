@@ -239,6 +239,11 @@ public class SharedConfig {
     // this fork: an autoLockIn that locks as soon as the app leaves the screen (another app, the home screen,
     // the screen turning off)
     public static final int AUTO_LOCK_IMMEDIATELY = -1;
+    // this fork: a second passcode that unlocks into made-up chats (FakeChats) instead of the account. fakeModeActive
+    // stays set until the real passcode is typed, so a restart in fake mode asks for a passcode again
+    public static String fakePasscodeHash = "";
+    public static byte[] fakePasscodeSalt = new byte[0];
+    public static boolean fakeModeActive;
 
     public static boolean saveIncomingPhotos;
     public static boolean allowScreenCapture;
@@ -448,6 +453,9 @@ public class SharedConfig {
                 editor.putString("passcodeHash1", passcodeHash);
                 editor.putString("passcodeSalt", passcodeSalt.length > 0 ? Base64.encodeToString(passcodeSalt, Base64.DEFAULT) : "");
                 editor.putBoolean("appLocked", appLocked);
+                editor.putString("fakePasscodeHash", fakePasscodeHash);
+                editor.putString("fakePasscodeSalt", fakePasscodeSalt.length > 0 ? Base64.encodeToString(fakePasscodeSalt, Base64.DEFAULT) : "");
+                editor.putBoolean("fakeModeActive", fakeModeActive);
                 editor.putInt("passcodeType", passcodeType);
                 editor.putLong("passcodeRetryInMs", passcodeRetryInMs);
                 editor.putLong("lastUptimeMillis", lastUptimeMillis);
@@ -560,6 +568,10 @@ public class SharedConfig {
             } else {
                 passcodeSalt = new byte[0];
             }
+            fakePasscodeHash = preferences.getString("fakePasscodeHash", "");
+            String fakePasscodeSaltString = preferences.getString("fakePasscodeSalt", "");
+            fakePasscodeSalt = fakePasscodeSaltString.length() > 0 ? Base64.decode(fakePasscodeSaltString, Base64.DEFAULT) : new byte[0];
+            fakeModeActive = preferences.getBoolean("fakeModeActive", false);
             lastUpdateCheckTime = preferences.getLong("appUpdateCheckTime", System.currentTimeMillis());
             try {
                 String update = preferences.getString("appUpdate", null);
@@ -847,6 +859,38 @@ public class SharedConfig {
         return passcodeHash.length() > 0 && autoLockIn == AUTO_LOCK_IMMEDIATELY;
     }
 
+    public static boolean hasFakePasscode() {
+        return passcodeHash.length() > 0 && fakePasscodeHash.length() > 0;
+    }
+
+    public static void setFakePasscode(String passcode) {
+        fakePasscodeSalt = new byte[16];
+        Utilities.random.nextBytes(fakePasscodeSalt);
+        fakePasscodeHash = hashFakePasscode(passcode);
+        saveConfig();
+    }
+
+    public static void clearFakePasscode() {
+        fakePasscodeHash = "";
+        fakePasscodeSalt = new byte[0];
+        fakeModeActive = false;
+        saveConfig();
+    }
+
+    public static boolean checkFakePasscode(String passcode) {
+        return hasFakePasscode() && fakePasscodeHash.equals(hashFakePasscode(passcode));
+    }
+
+    // salted the same way as passcodeHash
+    private static String hashFakePasscode(String passcode) {
+        final byte[] passcodeBytes = passcode.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        final byte[] bytes = new byte[32 + passcodeBytes.length];
+        System.arraycopy(fakePasscodeSalt, 0, bytes, 0, 16);
+        System.arraycopy(passcodeBytes, 0, bytes, 16, passcodeBytes.length);
+        System.arraycopy(fakePasscodeSalt, 0, bytes, passcodeBytes.length + 16, 16);
+        return Utilities.bytesToHex(Utilities.computeSHA256(bytes, 0, bytes.length));
+    }
+
     public static boolean checkPasscode(String passcode) {
         if (passcodeSalt.length == 0) {
             boolean result = Utilities.MD5(passcode).equals(passcodeHash);
@@ -891,6 +935,9 @@ public class SharedConfig {
         badPasscodeTries = 0;
         passcodeHash = "";
         passcodeSalt = new byte[0];
+        fakePasscodeHash = "";
+        fakePasscodeSalt = new byte[0];
+        fakeModeActive = false;
         autoLockIn = 60 * 60;
         lastPauseTime = 0;
         useFingerprintLock = true;

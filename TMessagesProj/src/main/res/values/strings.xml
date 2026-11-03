@@ -11662,4 +11662,13 @@
     <string name="DeleteAllFailedRefusedInfo">Telegram answered %1$s when deleting these.</string>
     <!-- this fork: passcode auto-lock as soon as the app leaves the screen -->
     <string name="AutoLockImmediately">Immediately</string>
+    <!-- this fork: a fake passcode that unlocks into made-up chats (FakeChatsActivity) -->
+    <string name="FakePasscode">Fake Passcode</string>
+    <string name="FakePasscodeTurnOff">Turn Fake Passcode Off</string>
+    <string name="FakePasscodeSettingsInfo">Typing the fake passcode on the lock screen opens Telegram with a few made-up chats and channels instead of yours. Typing your real passcode brings your chats back.</string>
+    <string name="FakePasscodeCreate">Create Fake Passcode</string>
+    <string name="FakePasscodeInfo">Typing this passcode on the lock screen opens Telegram with a few made-up chats and channels instead of yours. Go back to skip.</string>
+    <string name="FakePasscodeConfirm">Re-enter Fake Passcode</string>
+    <string name="FakePasscodeConfirmInfo">Your real passcode always brings your own chats back.</string>
+    <string name="FakePasscodeSameAsReal">That\'s your passcode. Choose a different one.</string>
 </resources>

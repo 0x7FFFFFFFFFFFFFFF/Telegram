@@ -96,14 +96,17 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     public final static int TYPE_MANAGE_CODE_SETTINGS = 0,
             TYPE_SETUP_CODE = 1,
             TYPE_ENTER_CODE_TO_MANAGE_SETTINGS = 2,
-            TYPE_ENTER_CODE_TO_GRAM_WALLET = 3;
+            TYPE_ENTER_CODE_TO_GRAM_WALLET = 3,
+            // this fork: sets the fake passcode (SharedConfig.setFakePasscode) the way TYPE_SETUP_CODE sets the passcode
+            TYPE_SETUP_FAKE_CODE = 4;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({
             TYPE_MANAGE_CODE_SETTINGS,
             TYPE_SETUP_CODE,
             TYPE_ENTER_CODE_TO_MANAGE_SETTINGS,
-            TYPE_ENTER_CODE_TO_GRAM_WALLET
+            TYPE_ENTER_CODE_TO_GRAM_WALLET,
+            TYPE_SETUP_FAKE_CODE
     })
     public @interface PasscodeActivityType {}
 
@@ -145,6 +148,12 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     private int autoLockRow;
     private int autoLockDetailRow;
 
+    private int fakePasscodeRow;
+    private int fakePasscodeOffRow;
+    private int fakePasscodeDetailRow;
+    // the settings opened right after creating a passcode ask for the fake one next
+    private boolean askFakePasscode;
+
     private int walletHeaderRow;
     private int walletPasscodeRow;
     private int walletFingerprintRow;
@@ -172,6 +181,14 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     public PasscodeActivity(@PasscodeActivityType int type) {
         super();
         this.type = type;
+        if (type == TYPE_SETUP_FAKE_CODE) {
+            // typed into the same lock screen as the passcode, so it takes the same form
+            currentPasswordType = SharedConfig.passcodeType;
+        }
+    }
+
+    private boolean isSetup() {
+        return type == TYPE_SETUP_CODE || type == TYPE_SETUP_FAKE_CODE;
     }
 
     @Override
@@ -291,6 +308,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                                 .setMessage(LocaleController.getString(R.string.DisablePasscodeConfirmMessage))
                                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                                 .setPositiveButton(LocaleController.getString(R.string.DisablePasscodeTurnOff), (dialog, which) -> {
+                                    SharedConfig.clearFakePasscode();
                                     SharedConfig.passcodeHash = "";
                                     SharedConfig.appLocked = false;
                                     SharedConfig.saveConfig();
@@ -310,6 +328,12 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                         alertDialog.confirm();
                     } else if (position == changePasscodeRow) {
                         presentFragment(new PasscodeActivity(TYPE_SETUP_CODE));
+                    } else if (position == fakePasscodeRow) {
+                        presentFragment(new PasscodeActivity(TYPE_SETUP_FAKE_CODE));
+                    } else if (position == fakePasscodeOffRow) {
+                        SharedConfig.clearFakePasscode();
+                        updateRows();
+                        listAdapter.notifyDataSetChanged();
                     } else if (position == autoLockRow) {
                         if (getParentActivity() == null) {
                             return;
@@ -399,6 +423,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 break;
             }
             case TYPE_SETUP_CODE:
+            case TYPE_SETUP_FAKE_CODE:
             case TYPE_ENTER_CODE_TO_MANAGE_SETTINGS:
             case TYPE_ENTER_CODE_TO_GRAM_WALLET: {
                 if (actionBar != null) {
@@ -457,7 +482,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 titleTextView = new TextView(context);
                 titleTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
                 titleTextView.setTypeface(AndroidUtilities.bold());
-                if (type == TYPE_SETUP_CODE) {
+                if (type == TYPE_SETUP_FAKE_CODE) {
+                    titleTextView.setText(LocaleController.getString(R.string.FakePasscodeCreate));
+                } else if (type == TYPE_SETUP_CODE) {
                     if (!SharedConfig.passcodeHash.isEmpty()) {
                         titleTextView.setText(LocaleController.getString(R.string.EnterNewPasscode));
                     } else {
@@ -516,7 +543,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 passwordEditText.setLines(1);
                 passwordEditText.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
                 passwordEditText.setSingleLine(true);
-                if (type == TYPE_SETUP_CODE) {
+                if (isSetup()) {
                     passcodeSetStep = 0;
                     passwordEditText.setImeOptions(EditorInfo.IME_ACTION_NEXT);
                 } else {
@@ -543,7 +570,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 passwordButton.setImageResource(R.drawable.msg_message);
                 passwordButton.setColorFilter(Theme.getColor(Theme.key_windowBackgroundWhiteHintText));
                 passwordButton.setBackground(Theme.createSelectorDrawable(getThemedColor(Theme.key_listSelector), 1));
-                AndroidUtilities.updateViewVisibilityAnimated(passwordButton, type == TYPE_SETUP_CODE && passcodeSetStep == 0, 0.1f, false);
+                AndroidUtilities.updateViewVisibilityAnimated(passwordButton, isSetup() && passcodeSetStep == 0, 0.1f, false);
 
                 AtomicBoolean isPasswordShown = new AtomicBoolean(false);
                 passwordEditText.addTextChangedListener(new TextWatcher() {
@@ -555,7 +582,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
 
                     @Override
                     public void afterTextChanged(Editable s) {
-                        if (type == TYPE_SETUP_CODE && passcodeSetStep == 0) {
+                        if (isSetup() && passcodeSetStep == 0) {
                             if (TextUtils.isEmpty(s) && passwordButton.getVisibility() != View.GONE) {
                                 if (isPasswordShown.get()) {
                                     passwordButton.callOnClick();
@@ -664,7 +691,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
 
                 innerLinearLayout.addView(codeContainer, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL, 0, 32, 0, 72));
 
-                if (type == TYPE_SETUP_CODE) {
+                if (isSetup()) {
                     frameLayout.setTag(Theme.key_windowBackgroundWhite);
                 }
 
@@ -672,7 +699,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 VerticalPositionAutoAnimator.attach(floatingButton);
                 frameLayout.addView(floatingButton, FragmentFloatingButton.createDefaultLayoutParamsBig());
                 floatingButton.setOnClickListener(view -> {
-                    if (type == TYPE_SETUP_CODE) {
+                    if (isSetup()) {
                         if (passcodeSetStep == 0) {
                             processNext();
                         } else {
@@ -855,6 +882,10 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         autoLockRow = rowCount++;
         autoLockDetailRow = rowCount++;
 
+        fakePasscodeRow = rowCount++;
+        fakePasscodeOffRow = SharedConfig.hasFakePasscode() ? rowCount++ : -1;
+        fakePasscodeDetailRow = rowCount++;
+
         if (getMessagesController().config.walletAvailable.get()) {
             walletHeaderRow = rowCount++;
             walletPasscodeRow = rowCount++;
@@ -874,6 +905,10 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     public void onTransitionAnimationEnd(boolean isOpen, boolean backward) {
         if (isOpen && type != TYPE_MANAGE_CODE_SETTINGS) {
             showKeyboard();
+        }
+        if (isOpen && askFakePasscode) {
+            askFakePasscode = false;
+            presentFragment(new PasscodeActivity(TYPE_SETUP_FAKE_CODE));
         }
     }
 
@@ -896,7 +931,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         } else if (type == TYPE_ENTER_CODE_TO_GRAM_WALLET) {
             text = LocaleController.getString(R.string.WalletAuthorizeTransactionPasscode);
         } else if (passcodeSetStep == 0) {
-            text = LocaleController.getString(currentPasswordType == SharedConfig.PASSCODE_TYPE_PIN ? R.string.CreatePasscodeInfoPIN : R.string.CreatePasscodeInfoPassword);
+            text = getSetupInfo();
         } else text = descriptionTextSwitcher.getCurrentView().getText().toString();
 
         boolean animate = !(descriptionTextSwitcher.getCurrentView().getText().equals(text) || TextUtils.isEmpty(descriptionTextSwitcher.getCurrentView().getText()));
@@ -905,7 +940,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         } else if (type == TYPE_ENTER_CODE_TO_GRAM_WALLET) {
             descriptionTextSwitcher.setText(LocaleController.getString(R.string.WalletAuthorizeTransactionPasscode));
         } else if (passcodeSetStep == 0) {
-            descriptionTextSwitcher.setText(LocaleController.getString(currentPasswordType == SharedConfig.PASSCODE_TYPE_PIN ? R.string.CreatePasscodeInfoPIN : R.string.CreatePasscodeInfoPassword), animate);
+            descriptionTextSwitcher.setText(getSetupInfo(), animate);
         }
         if (isPinCode()) {
             AndroidUtilities.updateViewVisibilityAnimated(codeFieldContainer, true, 1f, animate);
@@ -928,6 +963,33 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         showKeyboard();
     }
 
+    // shows the message under the field for three seconds and clears what was typed
+    private void showSetupError(String text) {
+        passcodesDoNotMatchTextView.setText(text);
+        AndroidUtilities.updateViewVisibilityAnimated(passcodesDoNotMatchTextView, true);
+        for (CodeNumberField f : codeFieldContainer.codeField) {
+            f.setText("");
+        }
+        if (isPinCode()) {
+            codeFieldContainer.codeField[0].requestFocus();
+        }
+        passwordEditText.setText("");
+        onPasscodeError();
+
+        codeFieldContainer.removeCallbacks(hidePasscodesDoNotMatch);
+        codeFieldContainer.post(()->{
+            codeFieldContainer.postDelayed(hidePasscodesDoNotMatch, 3000);
+            postedHidePasscodesDoNotMatch = true;
+        });
+    }
+
+    private String getSetupInfo() {
+        if (type == TYPE_SETUP_FAKE_CODE) {
+            return LocaleController.getString(R.string.FakePasscodeInfo);
+        }
+        return LocaleController.getString(currentPasswordType == SharedConfig.PASSCODE_TYPE_PIN ? R.string.CreatePasscodeInfoPIN : R.string.CreatePasscodeInfoPassword);
+    }
+
     /**
      * @return If custom keyboard should be visible
      */
@@ -942,13 +1004,25 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             return;
         }
 
+        final String password = isPinCode() ? codeFieldContainer.getCode() : passwordEditText.getText().toString();
+        if (type == TYPE_SETUP_FAKE_CODE && SharedConfig.checkPasscode(password)) {
+            // it has to unlock something else than the passcode does
+            showSetupError(LocaleController.getString(R.string.FakePasscodeSameAsReal));
+            return;
+        }
+
         if (otherItem != null) {
             otherItem.setVisibility(View.GONE);
         }
 
-        titleTextView.setText(LocaleController.getString(R.string.ConfirmCreatePasscode));
-        descriptionTextSwitcher.setText(AndroidUtilities.replaceTags(LocaleController.getString(R.string.PasscodeReinstallNotice)));
-        firstPassword = isPinCode() ? codeFieldContainer.getCode() : passwordEditText.getText().toString();
+        if (type == TYPE_SETUP_FAKE_CODE) {
+            titleTextView.setText(LocaleController.getString(R.string.FakePasscodeConfirm));
+            descriptionTextSwitcher.setText(LocaleController.getString(R.string.FakePasscodeConfirmInfo));
+        } else {
+            titleTextView.setText(LocaleController.getString(R.string.ConfirmCreatePasscode));
+            descriptionTextSwitcher.setText(AndroidUtilities.replaceTags(LocaleController.getString(R.string.PasscodeReinstallNotice)));
+        }
+        firstPassword = password;
         passwordEditText.setText("");
         passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         for (CodeNumberField f : codeFieldContainer.codeField) f.setText("");
@@ -957,12 +1031,12 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     }
 
     private boolean isPinCode() {
-        return type == TYPE_SETUP_CODE && currentPasswordType == SharedConfig.PASSCODE_TYPE_PIN ||
+        return isSetup() && currentPasswordType == SharedConfig.PASSCODE_TYPE_PIN ||
                 (type == TYPE_ENTER_CODE_TO_MANAGE_SETTINGS || type == TYPE_ENTER_CODE_TO_GRAM_WALLET) && SharedConfig.passcodeType == SharedConfig.PASSCODE_TYPE_PIN;
     }
 
     private boolean isPassword() {
-        return type == TYPE_SETUP_CODE && currentPasswordType == SharedConfig.PASSCODE_TYPE_PASSWORD ||
+        return isSetup() && currentPasswordType == SharedConfig.PASSCODE_TYPE_PASSWORD ||
                 (type == TYPE_ENTER_CODE_TO_MANAGE_SETTINGS || type == TYPE_ENTER_CODE_TO_GRAM_WALLET) && SharedConfig.passcodeType == SharedConfig.PASSCODE_TYPE_PASSWORD;
     }
 
@@ -972,27 +1046,31 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             return;
         }
         String password = isPinCode() ? codeFieldContainer.getCode() : passwordEditText.getText().toString();
-        if (type == TYPE_SETUP_CODE) {
+        if (isSetup()) {
             if (!firstPassword.equals(password)) {
-                AndroidUtilities.updateViewVisibilityAnimated(passcodesDoNotMatchTextView, true);
-                for (CodeNumberField f : codeFieldContainer.codeField) {
-                    f.setText("");
-                }
-                if (isPinCode()) {
-                    codeFieldContainer.codeField[0].requestFocus();
-                }
-                passwordEditText.setText("");
-                onPasscodeError();
+                showSetupError(LocaleController.getString(R.string.PasscodesDoNotMatchTryAgain));
+                return;
+            }
 
-                codeFieldContainer.removeCallbacks(hidePasscodesDoNotMatch);
-                codeFieldContainer.post(()->{
-                    codeFieldContainer.postDelayed(hidePasscodesDoNotMatch, 3000);
-                    postedHidePasscodesDoNotMatch = true;
+            if (type == TYPE_SETUP_FAKE_CODE) {
+                SharedConfig.setFakePasscode(firstPassword);
+                passwordEditText.clearFocus();
+                AndroidUtilities.hideKeyboard(passwordEditText);
+                for (CodeNumberField f : codeFieldContainer.codeField) {
+                    f.clearFocus();
+                    AndroidUtilities.hideKeyboard(f);
+                }
+                keyboardView.setEditText(null);
+                animateSuccessAnimation(() -> {
+                    finishFragment();
+                    NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode);
                 });
                 return;
             }
 
             boolean isFirst = SharedConfig.passcodeHash.isEmpty();
+            // this fork: the old fake passcode may not even fit the new passcode's form; a new one is asked for next
+            SharedConfig.clearFakePasscode();
             try {
                 SharedConfig.passcodeSalt = new byte[16];
                 Utilities.random.nextBytes(SharedConfig.passcodeSalt);
@@ -1019,14 +1097,17 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
 
             animateSuccessAnimation(() -> {
                 getMediaDataController().buildShortcuts();
+                // this fork: then the fake passcode is asked for, over the passcode settings
                 if (isFirst) {
-                    presentFragment(new PasscodeActivity(TYPE_MANAGE_CODE_SETTINGS), true);
+                    PasscodeActivity settings = new PasscodeActivity(TYPE_MANAGE_CODE_SETTINGS);
+                    settings.askFakePasscode = true;
+                    presentFragment(settings, true);
                     if (openedSettings != null) {
                         AndroidUtilities.runOnUIThread(openedSettings);
                         openedSettings = null;
                     }
                 } else {
-                    finishFragment();
+                    presentFragment(new PasscodeActivity(TYPE_SETUP_FAKE_CODE), true);
                 }
                 NotificationCenter.getGlobalInstance().postNotificationName(NotificationCenter.didSetPasscode);
             });
@@ -1139,7 +1220,8 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int position = holder.getAdapterPosition();
             return position == fingerprintRow || position == autoLockRow || position == captureRow ||
-                    position == changePasscodeRow || position == disablePasscodeRow || position == walletPasscodeRow || position == walletFingerprintRow;
+                    position == changePasscodeRow || position == disablePasscodeRow || position == walletPasscodeRow || position == walletFingerprintRow ||
+                    position == fakePasscodeRow || position == fakePasscodeOffRow;
         }
 
         @Override
@@ -1220,6 +1302,14 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                         textCell.setText(LocaleController.getString(R.string.DisablePasscode), false);
                         textCell.setTag(Theme.key_text_RedBold);
                         textCell.setTextColor(Theme.getColor(Theme.key_text_RedBold));
+                    } else if (position == fakePasscodeRow) {
+                        textCell.setTextAndValue(LocaleController.getString(R.string.FakePasscode), LocaleController.getString(SharedConfig.hasFakePasscode() ? R.string.PasswordOn : R.string.PasswordOff), fakePasscodeOffRow != -1);
+                        textCell.setTag(Theme.key_windowBackgroundWhiteBlackText);
+                        textCell.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+                    } else if (position == fakePasscodeOffRow) {
+                        textCell.setText(LocaleController.getString(R.string.FakePasscodeTurnOff), false);
+                        textCell.setTag(Theme.key_text_RedBold);
+                        textCell.setTextColor(Theme.getColor(Theme.key_text_RedBold));
                     }
                     break;
                 }
@@ -1248,6 +1338,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                     } else if (position == autoLockDetailRow) {
                         cell.setText(LocaleController.getString(R.string.AutoLockInfo));
                         cell.getTextView().setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+                    } else if (position == fakePasscodeDetailRow) {
+                        cell.setText(LocaleController.getString(R.string.FakePasscodeSettingsInfo));
+                        cell.getTextView().setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
                     } else if (position == walletInfoRow) {
                         cell.setText(LocaleController.getString(R.string.WalletLockInfo));
                         cell.getTextView().setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
@@ -1264,9 +1357,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         public int getItemViewType(int position) {
             if (position == fingerprintRow || position == captureRow || position == walletFingerprintRow || position == walletPasscodeRow) {
                 return VIEW_TYPE_CHECK;
-            } else if (position == changePasscodeRow || position == autoLockRow || position == disablePasscodeRow) {
+            } else if (position == changePasscodeRow || position == autoLockRow || position == disablePasscodeRow || position == fakePasscodeRow || position == fakePasscodeOffRow) {
                 return VIEW_TYPE_SETTING;
-            } else if (position == autoLockDetailRow || position == captureDetailRow || position == hintRow || position == walletInfoRow) {
+            } else if (position == autoLockDetailRow || position == captureDetailRow || position == hintRow || position == walletInfoRow || position == fakePasscodeDetailRow) {
                 return VIEW_TYPE_INFO;
             } else if (position == captureHeaderRow || position == walletHeaderRow) {
                 return VIEW_TYPE_HEADER;

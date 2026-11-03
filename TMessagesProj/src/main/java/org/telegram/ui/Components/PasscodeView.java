@@ -1107,7 +1107,14 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
                 onPasscodeError();
                 return;
             }
-            if (!SharedConfig.checkPasscode(password)) {
+            final boolean realPasscode = SharedConfig.checkPasscode(password);
+            // this fork: the fake passcode unlocks too, into the fake chats (LaunchActivity swaps the screens); only
+            // the main window takes it, a bubble would open a real chat
+            final boolean fakePasscode = !realPasscode && isAppLock() && AndroidUtilities.findActivity(getContext()) instanceof LaunchActivity && SharedConfig.checkFakePasscode(password);
+            if (isAppLock() && (realPasscode || fakePasscode)) {
+                SharedConfig.fakeModeActive = fakePasscode;
+            }
+            if (!realPasscode && !fakePasscode) {
                 SharedConfig.increaseBadPasscodeTries();
                 if (SharedConfig.passcodeRetryInMs > 0) {
                     checkRetryTextView();
