@@ -1108,13 +1108,19 @@ public class PasscodeView extends FrameLayout implements NotificationCenter.Noti
                 return;
             }
             final boolean realPasscode = SharedConfig.checkPasscode(password);
-            // this fork: the fake passcode unlocks too, into the fake chats (LaunchActivity swaps the screens); only
-            // the main window takes it, a bubble would open a real chat
-            final boolean fakePasscode = !realPasscode && isAppLock() && AndroidUtilities.findActivity(getContext()) instanceof LaunchActivity && SharedConfig.checkFakePasscode(password);
-            if (isAppLock() && (realPasscode || fakePasscode)) {
-                SharedConfig.fakeModeActive = fakePasscode;
+            // this fork: the fake and wipe passcodes unlock too, both into the fake chats (LaunchActivity swaps the
+            // screens); only the main window takes them, a bubble would open a real chat. The wipe passcode also
+            // marks the account wipe pending, which LaunchActivity starts once it's in fake mode.
+            final boolean onLaunch = isAppLock() && AndroidUtilities.findActivity(getContext()) instanceof LaunchActivity;
+            final boolean wipePasscode = !realPasscode && onLaunch && SharedConfig.checkWipePasscode(password);
+            final boolean fakePasscode = !realPasscode && !wipePasscode && onLaunch && SharedConfig.checkFakePasscode(password);
+            if (isAppLock() && (realPasscode || wipePasscode || fakePasscode)) {
+                SharedConfig.fakeModeActive = wipePasscode || fakePasscode;
             }
-            if (!realPasscode && !fakePasscode) {
+            if (wipePasscode) {
+                SharedConfig.setWipePending();
+            }
+            if (!realPasscode && !wipePasscode && !fakePasscode) {
                 SharedConfig.increaseBadPasscodeTries();
                 if (SharedConfig.passcodeRetryInMs > 0) {
                     checkRetryTextView();

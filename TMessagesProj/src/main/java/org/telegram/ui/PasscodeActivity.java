@@ -98,7 +98,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             TYPE_ENTER_CODE_TO_MANAGE_SETTINGS = 2,
             TYPE_ENTER_CODE_TO_GRAM_WALLET = 3,
             // this fork: sets the fake passcode (SharedConfig.setFakePasscode) the way TYPE_SETUP_CODE sets the passcode
-            TYPE_SETUP_FAKE_CODE = 4;
+            TYPE_SETUP_FAKE_CODE = 4,
+            // this fork: sets the wipe passcode (SharedConfig.setWipePasscode) the same way
+            TYPE_SETUP_WIPE_CODE = 5;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({
@@ -106,7 +108,8 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             TYPE_SETUP_CODE,
             TYPE_ENTER_CODE_TO_MANAGE_SETTINGS,
             TYPE_ENTER_CODE_TO_GRAM_WALLET,
-            TYPE_SETUP_FAKE_CODE
+            TYPE_SETUP_FAKE_CODE,
+            TYPE_SETUP_WIPE_CODE
     })
     public @interface PasscodeActivityType {}
 
@@ -151,6 +154,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     private int fakePasscodeRow;
     private int fakePasscodeOffRow;
     private int fakePasscodeDetailRow;
+    private int wipePasscodeRow;
+    private int wipePasscodeOffRow;
+    private int wipePasscodeDetailRow;
     // the settings opened right after creating a passcode ask for the fake one next
     private boolean askFakePasscode;
 
@@ -181,14 +187,14 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
     public PasscodeActivity(@PasscodeActivityType int type) {
         super();
         this.type = type;
-        if (type == TYPE_SETUP_FAKE_CODE) {
+        if (type == TYPE_SETUP_FAKE_CODE || type == TYPE_SETUP_WIPE_CODE) {
             // typed into the same lock screen as the passcode, so it takes the same form
             currentPasswordType = SharedConfig.passcodeType;
         }
     }
 
     private boolean isSetup() {
-        return type == TYPE_SETUP_CODE || type == TYPE_SETUP_FAKE_CODE;
+        return type == TYPE_SETUP_CODE || type == TYPE_SETUP_FAKE_CODE || type == TYPE_SETUP_WIPE_CODE;
     }
 
     @Override
@@ -309,6 +315,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                                 .setNegativeButton(LocaleController.getString(R.string.Cancel), null)
                                 .setPositiveButton(LocaleController.getString(R.string.DisablePasscodeTurnOff), (dialog, which) -> {
                                     SharedConfig.clearFakePasscode();
+                                    SharedConfig.clearWipePasscode();
                                     SharedConfig.passcodeHash = "";
                                     SharedConfig.appLocked = false;
                                     SharedConfig.saveConfig();
@@ -332,6 +339,12 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                         presentFragment(new PasscodeActivity(TYPE_SETUP_FAKE_CODE));
                     } else if (position == fakePasscodeOffRow) {
                         SharedConfig.clearFakePasscode();
+                        updateRows();
+                        listAdapter.notifyDataSetChanged();
+                    } else if (position == wipePasscodeRow) {
+                        presentFragment(new PasscodeActivity(TYPE_SETUP_WIPE_CODE));
+                    } else if (position == wipePasscodeOffRow) {
+                        SharedConfig.clearWipePasscode();
                         updateRows();
                         listAdapter.notifyDataSetChanged();
                     } else if (position == autoLockRow) {
@@ -484,6 +497,8 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 titleTextView.setTypeface(AndroidUtilities.bold());
                 if (type == TYPE_SETUP_FAKE_CODE) {
                     titleTextView.setText(LocaleController.getString(R.string.FakePasscodeCreate));
+                } else if (type == TYPE_SETUP_WIPE_CODE) {
+                    titleTextView.setText(LocaleController.getString(R.string.WipePasscodeCreate));
                 } else if (type == TYPE_SETUP_CODE) {
                     if (!SharedConfig.passcodeHash.isEmpty()) {
                         titleTextView.setText(LocaleController.getString(R.string.EnterNewPasscode));
@@ -885,6 +900,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         fakePasscodeRow = rowCount++;
         fakePasscodeOffRow = SharedConfig.hasFakePasscode() ? rowCount++ : -1;
         fakePasscodeDetailRow = rowCount++;
+        wipePasscodeRow = rowCount++;
+        wipePasscodeOffRow = SharedConfig.hasWipePasscode() ? rowCount++ : -1;
+        wipePasscodeDetailRow = rowCount++;
 
         if (getMessagesController().config.walletAvailable.get()) {
             walletHeaderRow = rowCount++;
@@ -987,6 +1005,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         if (type == TYPE_SETUP_FAKE_CODE) {
             return LocaleController.getString(R.string.FakePasscodeInfo);
         }
+        if (type == TYPE_SETUP_WIPE_CODE) {
+            return LocaleController.getString(R.string.WipePasscodeInfo);
+        }
         return LocaleController.getString(currentPasswordType == SharedConfig.PASSCODE_TYPE_PIN ? R.string.CreatePasscodeInfoPIN : R.string.CreatePasscodeInfoPassword);
     }
 
@@ -1005,9 +1026,22 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         }
 
         final String password = isPinCode() ? codeFieldContainer.getCode() : passwordEditText.getText().toString();
+        // this fork: each decoy passcode has to unlock something other than the passcode does, and the two decoys
+        // have to differ from each other
         if (type == TYPE_SETUP_FAKE_CODE && SharedConfig.checkPasscode(password)) {
-            // it has to unlock something else than the passcode does
             showSetupError(LocaleController.getString(R.string.FakePasscodeSameAsReal));
+            return;
+        }
+        if (type == TYPE_SETUP_FAKE_CODE && SharedConfig.checkWipePasscode(password)) {
+            showSetupError(LocaleController.getString(R.string.FakePasscodeSameAsWipe));
+            return;
+        }
+        if (type == TYPE_SETUP_WIPE_CODE && SharedConfig.checkPasscode(password)) {
+            showSetupError(LocaleController.getString(R.string.WipePasscodeSameAsReal));
+            return;
+        }
+        if (type == TYPE_SETUP_WIPE_CODE && SharedConfig.checkFakePasscode(password)) {
+            showSetupError(LocaleController.getString(R.string.WipePasscodeSameAsFake));
             return;
         }
 
@@ -1018,6 +1052,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         if (type == TYPE_SETUP_FAKE_CODE) {
             titleTextView.setText(LocaleController.getString(R.string.FakePasscodeConfirm));
             descriptionTextSwitcher.setText(LocaleController.getString(R.string.FakePasscodeConfirmInfo));
+        } else if (type == TYPE_SETUP_WIPE_CODE) {
+            titleTextView.setText(LocaleController.getString(R.string.WipePasscodeConfirm));
+            descriptionTextSwitcher.setText(LocaleController.getString(R.string.WipePasscodeConfirmInfo));
         } else {
             titleTextView.setText(LocaleController.getString(R.string.ConfirmCreatePasscode));
             descriptionTextSwitcher.setText(AndroidUtilities.replaceTags(LocaleController.getString(R.string.PasscodeReinstallNotice)));
@@ -1052,8 +1089,12 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                 return;
             }
 
-            if (type == TYPE_SETUP_FAKE_CODE) {
-                SharedConfig.setFakePasscode(firstPassword);
+            if (type == TYPE_SETUP_FAKE_CODE || type == TYPE_SETUP_WIPE_CODE) {
+                if (type == TYPE_SETUP_FAKE_CODE) {
+                    SharedConfig.setFakePasscode(firstPassword);
+                } else {
+                    SharedConfig.setWipePasscode(firstPassword);
+                }
                 passwordEditText.clearFocus();
                 AndroidUtilities.hideKeyboard(passwordEditText);
                 for (CodeNumberField f : codeFieldContainer.codeField) {
@@ -1069,8 +1110,10 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             }
 
             boolean isFirst = SharedConfig.passcodeHash.isEmpty();
-            // this fork: the old fake passcode may not even fit the new passcode's form; a new one is asked for next
+            // this fork: the old fake/wipe passcodes may not even fit the new passcode's form; the fake one is asked
+            // for again next, and the wipe one is cleared (it can be set again from settings)
             SharedConfig.clearFakePasscode();
+            SharedConfig.clearWipePasscode();
             try {
                 SharedConfig.passcodeSalt = new byte[16];
                 Utilities.random.nextBytes(SharedConfig.passcodeSalt);
@@ -1221,7 +1264,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             int position = holder.getAdapterPosition();
             return position == fingerprintRow || position == autoLockRow || position == captureRow ||
                     position == changePasscodeRow || position == disablePasscodeRow || position == walletPasscodeRow || position == walletFingerprintRow ||
-                    position == fakePasscodeRow || position == fakePasscodeOffRow;
+                    position == fakePasscodeRow || position == fakePasscodeOffRow || position == wipePasscodeRow || position == wipePasscodeOffRow;
         }
 
         @Override
@@ -1310,6 +1353,14 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                         textCell.setText(LocaleController.getString(R.string.FakePasscodeTurnOff), false);
                         textCell.setTag(Theme.key_text_RedBold);
                         textCell.setTextColor(Theme.getColor(Theme.key_text_RedBold));
+                    } else if (position == wipePasscodeRow) {
+                        textCell.setTextAndValue(LocaleController.getString(R.string.WipePasscode), LocaleController.getString(SharedConfig.hasWipePasscode() ? R.string.PasswordOn : R.string.PasswordOff), wipePasscodeOffRow != -1);
+                        textCell.setTag(Theme.key_windowBackgroundWhiteBlackText);
+                        textCell.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+                    } else if (position == wipePasscodeOffRow) {
+                        textCell.setText(LocaleController.getString(R.string.WipePasscodeTurnOff), false);
+                        textCell.setTag(Theme.key_text_RedBold);
+                        textCell.setTextColor(Theme.getColor(Theme.key_text_RedBold));
                     }
                     break;
                 }
@@ -1341,6 +1392,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
                     } else if (position == fakePasscodeDetailRow) {
                         cell.setText(LocaleController.getString(R.string.FakePasscodeSettingsInfo));
                         cell.getTextView().setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+                    } else if (position == wipePasscodeDetailRow) {
+                        cell.setText(LocaleController.getString(R.string.WipePasscodeSettingsInfo));
+                        cell.getTextView().setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
                     } else if (position == walletInfoRow) {
                         cell.setText(LocaleController.getString(R.string.WalletLockInfo));
                         cell.getTextView().setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
@@ -1357,9 +1411,9 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
         public int getItemViewType(int position) {
             if (position == fingerprintRow || position == captureRow || position == walletFingerprintRow || position == walletPasscodeRow) {
                 return VIEW_TYPE_CHECK;
-            } else if (position == changePasscodeRow || position == autoLockRow || position == disablePasscodeRow || position == fakePasscodeRow || position == fakePasscodeOffRow) {
+            } else if (position == changePasscodeRow || position == autoLockRow || position == disablePasscodeRow || position == fakePasscodeRow || position == fakePasscodeOffRow || position == wipePasscodeRow || position == wipePasscodeOffRow) {
                 return VIEW_TYPE_SETTING;
-            } else if (position == autoLockDetailRow || position == captureDetailRow || position == hintRow || position == walletInfoRow || position == fakePasscodeDetailRow) {
+            } else if (position == autoLockDetailRow || position == captureDetailRow || position == hintRow || position == walletInfoRow || position == fakePasscodeDetailRow || position == wipePasscodeDetailRow) {
                 return VIEW_TYPE_INFO;
             } else if (position == captureHeaderRow || position == walletHeaderRow) {
                 return VIEW_TYPE_HEADER;

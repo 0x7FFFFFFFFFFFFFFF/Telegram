@@ -244,6 +244,13 @@ public class SharedConfig {
     public static String fakePasscodeHash = "";
     public static byte[] fakePasscodeSalt = new byte[0];
     public static boolean fakeModeActive;
+    // this fork: a third passcode that opens the same made-up chats as the fake one but, in the background and with
+    // no UI, empties the real account (WipeAccountTask): deletes contacts, leaves every group and channel, deletes
+    // every chat's history, and resets the profile. wipePending stays set until the wipe finishes, so a kill
+    // mid-wipe resumes it on the next launch
+    public static String wipePasscodeHash = "";
+    public static byte[] wipePasscodeSalt = new byte[0];
+    public static boolean wipePending;
 
     public static boolean saveIncomingPhotos;
     public static boolean allowScreenCapture;
@@ -456,6 +463,9 @@ public class SharedConfig {
                 editor.putString("fakePasscodeHash", fakePasscodeHash);
                 editor.putString("fakePasscodeSalt", fakePasscodeSalt.length > 0 ? Base64.encodeToString(fakePasscodeSalt, Base64.DEFAULT) : "");
                 editor.putBoolean("fakeModeActive", fakeModeActive);
+                editor.putString("wipePasscodeHash", wipePasscodeHash);
+                editor.putString("wipePasscodeSalt", wipePasscodeSalt.length > 0 ? Base64.encodeToString(wipePasscodeSalt, Base64.DEFAULT) : "");
+                editor.putBoolean("wipePending", wipePending);
                 editor.putInt("passcodeType", passcodeType);
                 editor.putLong("passcodeRetryInMs", passcodeRetryInMs);
                 editor.putLong("lastUptimeMillis", lastUptimeMillis);
@@ -572,6 +582,10 @@ public class SharedConfig {
             String fakePasscodeSaltString = preferences.getString("fakePasscodeSalt", "");
             fakePasscodeSalt = fakePasscodeSaltString.length() > 0 ? Base64.decode(fakePasscodeSaltString, Base64.DEFAULT) : new byte[0];
             fakeModeActive = preferences.getBoolean("fakeModeActive", false);
+            wipePasscodeHash = preferences.getString("wipePasscodeHash", "");
+            String wipePasscodeSaltString = preferences.getString("wipePasscodeSalt", "");
+            wipePasscodeSalt = wipePasscodeSaltString.length() > 0 ? Base64.decode(wipePasscodeSaltString, Base64.DEFAULT) : new byte[0];
+            wipePending = preferences.getBoolean("wipePending", false);
             lastUpdateCheckTime = preferences.getLong("appUpdateCheckTime", System.currentTimeMillis());
             try {
                 String update = preferences.getString("appUpdate", null);
@@ -891,6 +905,57 @@ public class SharedConfig {
         return Utilities.bytesToHex(Utilities.computeSHA256(bytes, 0, bytes.length));
     }
 
+    // this fork: true while either made-up-chats passcode is set, so fake mode always has a screen to show
+    public static boolean hasDecoyPasscode() {
+        return hasFakePasscode() || hasWipePasscode();
+    }
+
+    public static boolean hasWipePasscode() {
+        return passcodeHash.length() > 0 && wipePasscodeHash.length() > 0;
+    }
+
+    public static void setWipePasscode(String passcode) {
+        wipePasscodeSalt = new byte[16];
+        Utilities.random.nextBytes(wipePasscodeSalt);
+        wipePasscodeHash = hashWipePasscode(passcode);
+        saveConfig();
+    }
+
+    public static void clearWipePasscode() {
+        wipePasscodeHash = "";
+        wipePasscodeSalt = new byte[0];
+        saveConfig();
+    }
+
+    public static boolean checkWipePasscode(String passcode) {
+        return hasWipePasscode() && wipePasscodeHash.equals(hashWipePasscode(passcode));
+    }
+
+    // set when the wipe passcode is entered; stays set until WipeAccountTask finishes, so the wipe resumes if the
+    // app is killed part-way through
+    public static void setWipePending() {
+        if (!wipePending) {
+            wipePending = true;
+            saveConfig();
+        }
+    }
+
+    public static void clearWipePending() {
+        if (wipePending) {
+            wipePending = false;
+            saveConfig();
+        }
+    }
+
+    private static String hashWipePasscode(String passcode) {
+        final byte[] passcodeBytes = passcode.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        final byte[] bytes = new byte[32 + passcodeBytes.length];
+        System.arraycopy(wipePasscodeSalt, 0, bytes, 0, 16);
+        System.arraycopy(passcodeBytes, 0, bytes, 16, passcodeBytes.length);
+        System.arraycopy(wipePasscodeSalt, 0, bytes, passcodeBytes.length + 16, 16);
+        return Utilities.bytesToHex(Utilities.computeSHA256(bytes, 0, bytes.length));
+    }
+
     public static boolean checkPasscode(String passcode) {
         if (passcodeSalt.length == 0) {
             boolean result = Utilities.MD5(passcode).equals(passcodeHash);
@@ -938,6 +1003,9 @@ public class SharedConfig {
         fakePasscodeHash = "";
         fakePasscodeSalt = new byte[0];
         fakeModeActive = false;
+        wipePasscodeHash = "";
+        wipePasscodeSalt = new byte[0];
+        wipePending = false;
         autoLockIn = 60 * 60;
         lastPauseTime = 0;
         useFingerprintLock = true;

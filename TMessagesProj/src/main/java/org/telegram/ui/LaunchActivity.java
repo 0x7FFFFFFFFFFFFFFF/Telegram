@@ -134,6 +134,7 @@ import org.telegram.messenger.SharedConfig;
 import org.telegram.messenger.SharedPrefsHelper;
 import org.telegram.messenger.TopicsController;
 import org.telegram.messenger.UserConfig;
+import org.telegram.messenger.WipeAccountTask;
 import org.telegram.messenger.UserObject;
 import org.telegram.messenger.Utilities;
 import org.telegram.messenger.browser.Browser;
@@ -466,9 +467,13 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         }
         Theme.createCommonChatResources();
         Theme.createDialogsResources(this);
-        if (SharedConfig.fakeModeActive && SharedConfig.hasFakePasscode()) {
+        if (SharedConfig.fakeModeActive && SharedConfig.hasDecoyPasscode()) {
             // this fork: the app was left in fake mode; it starts locked, so a passcode decides which chats open
             SharedConfig.appLocked = true;
+        }
+        // this fork: if the wipe passcode was entered but the wipe didn't finish before the app was killed, resume it
+        if (SharedConfig.wipePending) {
+            WipeAccountTask.runIfPending();
         }
         if (SharedConfig.passcodeHash.length() != 0 && SharedConfig.appLocked) {
             SharedConfig.lastPauseTime = (int) (SystemClock.elapsedRealtime() / 1000);
@@ -1487,12 +1492,16 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
             SharedConfig.isWaitingForPasscodeEnter = false;
             // this fork: the fake passcode opens the fake chats and the real one the real chats; a fingerprint keeps
             // whichever was open
-            final boolean fake = SharedConfig.fakeModeActive && SharedConfig.hasFakePasscode();
+            final boolean fake = SharedConfig.fakeModeActive && SharedConfig.hasDecoyPasscode();
             if (fake != isShowingFakeChats()) {
                 setFakeChatsShown(fake);
             }
             if (fake) {
                 passcodeSaveIntent = null;
+            }
+            // this fork: the wipe passcode opens the fake chats like the fake one does, and also runs the account wipe
+            if (SharedConfig.wipePending) {
+                WipeAccountTask.runIfPending();
             }
             if (passcodeSaveIntent != null) {
                 handleIntent(passcodeSaveIntent, passcodeSaveIntentIsNew, passcodeSaveIntentIsRestore, true, null, false, true);
@@ -1569,7 +1578,7 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
 
     @SuppressLint("Range")
     private boolean handleIntent(Intent intent, boolean isNew, boolean restore, boolean fromPassword, Browser.Progress progress, boolean rebuildFragments, boolean openedTelegram) {
-        if (SharedConfig.fakeModeActive && SharedConfig.hasFakePasscode()) {
+        if (SharedConfig.fakeModeActive && SharedConfig.hasDecoyPasscode()) {
             // this fork: in fake mode nothing from outside (a notification, a link, a share) may open the account;
             // the intent is dropped, and only the lock screen is shown if it's due
             if (!fromPassword && (AndroidUtilities.needShowPasscode(true) || SharedConfig.isWaitingForPasscodeEnter)) {
