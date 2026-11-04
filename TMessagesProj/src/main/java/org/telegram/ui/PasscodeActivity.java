@@ -437,6 +437,7 @@ public class PasscodeActivity extends BaseFragment implements NotificationCenter
             }
             case TYPE_SETUP_CODE:
             case TYPE_SETUP_FAKE_CODE:
+            case TYPE_SETUP_WIPE_CODE:
             case TYPE_ENTER_CODE_TO_MANAGE_SETTINGS:
             case TYPE_ENTER_CODE_TO_GRAM_WALLET: {
                 if (actionBar != null) {
