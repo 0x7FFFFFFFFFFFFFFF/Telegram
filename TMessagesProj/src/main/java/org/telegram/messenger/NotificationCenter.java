@@ -38,6 +38,7 @@ public class NotificationCenter {
     public static final int didReceiveNewMessages = totalEvents++;
     public static final int updateInterfaces = totalEvents++;
     public static final int dialogsNeedReload = totalEvents++;
+    public static final int filteredWordsChanged = totalEvents++; // this fork: the content-filter word list changed
     public static final int closeChats = totalEvents++;
     public static final int closeChatActivity = totalEvents++;
     public static final int closeProfileActivity = totalEvents++;

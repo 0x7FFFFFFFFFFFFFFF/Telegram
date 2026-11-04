@@ -1625,6 +1625,18 @@ public class DialogsAdapter extends RecyclerListView.SelectionAdapter implements
             }
         }
 
+        // this fork: hide chats whose peer name/title is on the content filter (MessageFilter); copy, don't mutate
+        if (!org.telegram.messenger.MessageFilter.isEmpty()) {
+            final ArrayList<TLRPC.Dialog> filtered = new ArrayList<>(array.size());
+            for (int i = 0; i < array.size(); i++) {
+                final TLRPC.Dialog d = array.get(i);
+                if (d == null || !org.telegram.messenger.MessageFilter.matchesDialog(currentAccount, d.id)) {
+                    filtered.add(d);
+                }
+            }
+            array = filtered;
+        }
+
         dialogsCount = array.size();
         isEmpty = false;
         if (dialogsCount == 0 && parentFragment.isArchive()) {

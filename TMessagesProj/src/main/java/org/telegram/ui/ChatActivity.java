@@ -1268,6 +1268,7 @@ public class ChatActivity extends BaseFragment implements
     public final static int OPTION_VIEW_STATISTICS = 115;
     public final static int OPTION_WELCOME_REVERT = 116;
     public final static int OPTION_SEND_MONEY = 117;
+    public final static int OPTION_BLOCK = 118; // this fork: add the selected message's text to the content filter
 
     private final static int[] allowedNotificationsDuringChatListAnimations = new int[]{
             NotificationCenter.messagesRead,
@@ -21419,6 +21420,10 @@ public class ChatActivity extends BaseFragment implements
         }
         for (int a = 0; a < messArr.size(); a++) {
             MessageObject obj = messArr.get(a);
+            // this fork: words on the filter list hide the message entirely (MessageFilter); skip before it's added
+            if (org.telegram.messenger.MessageFilter.matchesMessage(obj)) {
+                continue;
+            }
             if (obj.replyMessageObject != null) {
                 repliesMessagesDict.put(obj.replyMessageObject.getId(), obj.replyMessageObject);
                 addReplyMessageOwner(obj, 0);
@@ -25806,6 +25811,10 @@ public class ChatActivity extends BaseFragment implements
         for (int a = 0, N = arr.size(); a < N; a++) {
             FileLog.d("processNewMessages " + a + " our of " + N);
             MessageObject messageObject = arr.get(a);
+            // this fork: filtered words hide the message entirely (MessageFilter)
+            if (org.telegram.messenger.MessageFilter.matchesMessage(messageObject)) {
+                continue;
+            }
             if (!isAd) {
                 isAd = messageObject.isSponsored();
             }
@@ -33759,6 +33768,12 @@ public class ChatActivity extends BaseFragment implements
         }
         boolean preserveDim = false;
         switch (option) {
+            case OPTION_BLOCK: {
+                // this fork: open the filter dialog prefilled with the message's text, to edit then save
+                final String prefill = selectedObject.messageOwner != null ? selectedObject.messageOwner.message : null;
+                FilteredWordsActivity.showEditDialog(this, null, prefill);
+                break;
+            }
             case OPTION_RETRY: {
                 final MessageObject object = selectedObject;
                 final MessageObject.GroupedMessages group = selectedObjectGroup;
@@ -46352,6 +46367,13 @@ public class ChatActivity extends BaseFragment implements
             deleteIconRes = R.drawable.msg_delete_auto;
         } else {
             deleteIconRes = R.drawable.msg_delete;
+        }
+
+        // this fork: offer to filter (hide) anything containing the selected message's text (MessageFilter)
+        if (selectedObject.messageOwner != null && selectedObject.messageOwner.message != null && selectedObject.messageOwner.message.length() > 0) {
+            items.add(LocaleController.getString(R.string.FilterAction));
+            options.add(OPTION_BLOCK);
+            icons.add(R.drawable.msg_block2);
         }
 
         if (type == -1) {

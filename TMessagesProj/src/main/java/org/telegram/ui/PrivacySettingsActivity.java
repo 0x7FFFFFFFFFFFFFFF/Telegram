@@ -92,6 +92,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
     private int privacySectionRow;
     @Keep
     private int blockedRow;
+    private int filteredWordsRow; // this fork: opens FilteredWordsActivity
     @Keep
     private int phoneNumberRow;
     @Keep
@@ -326,6 +327,8 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 }
             } else if (position == blockedRow) {
                 presentFragment(new PrivacyUsersActivity());
+            } else if (position == filteredWordsRow) {
+                presentFragment(new FilteredWordsActivity());
             } else if (position == myMessagesDeleteRow) {
                 DeleteAllMessagesTask.deleteMineEverywhere(PrivacySettingsActivity.this);
             } else if (position == sessionsRow) {
@@ -726,6 +729,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
             emailLoginRow = -1;
         }
         blockedRow = rowCount++;
+        filteredWordsRow = rowCount++;
         if (currentPassword != null) {
             boolean hasEmail = currentPassword.login_email_pattern != null;
             if (SharedConfig.hasEmailLogin != hasEmail) {
@@ -1027,7 +1031,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
         @Override
         public boolean isEnabled(RecyclerView.ViewHolder holder) {
             int position = holder.getAdapterPosition();
-            return position == passcodeRow || position == passwordRow || position == passkeysRow || position == blockedRow || position == sessionsRow || position == secretWebpageRow || position == webSessionsRow ||
+            return position == passcodeRow || position == passwordRow || position == passkeysRow || position == blockedRow || position == filteredWordsRow || position == sessionsRow || position == secretWebpageRow || position == webSessionsRow ||
                     position == groupsRow && !getContactsController().getLoadingPrivacyInfo(ContactsController.PRIVACY_RULES_TYPE_INVITE) ||
                     position == lastSeenRow && !getContactsController().getLoadingPrivacyInfo(ContactsController.PRIVACY_RULES_TYPE_LASTSEEN) ||
                     position == callsRow && !getContactsController().getLoadingPrivacyInfo(ContactsController.PRIVACY_RULES_TYPE_CALLS) ||
@@ -1394,6 +1398,10 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                             value = "";
                         }
                         textCell2.setTextAndValueAndIcon(getString("BlockedUsers", R.string.BlockedUsers), value, true, R.drawable.msg2_block2, true);
+                    } else if (position == filteredWordsRow) {
+                        final int count = org.telegram.messenger.MessageFilter.getWords().size();
+                        value = count == 0 ? "" : String.format(LocaleController.getInstance().getCurrentLocale(), "%d", count);
+                        textCell2.setTextAndValueAndIcon(getString(R.string.FilteredWords), value, true, R.drawable.msg2_block2, true);
                     }
                     textCell2.setDrawLoading(showLoading, loadingLen, animated);
                     break;
@@ -1414,7 +1422,7 @@ public class PrivacySettingsActivity extends BaseFragment implements Notificatio
                 return 3;
             } else if (position == botsAndWebsitesShadowRow) {
                 return 4;
-            } else if (position == autoDeleteMesages || position == sessionsRow || position == emailLoginRow || position == passwordRow || position == passkeysRow || position == passcodeRow || position == blockedRow) {
+            } else if (position == autoDeleteMesages || position == sessionsRow || position == emailLoginRow || position == passwordRow || position == passkeysRow || position == passcodeRow || position == blockedRow || position == filteredWordsRow) {
                 return 5;
             }
             return 0;

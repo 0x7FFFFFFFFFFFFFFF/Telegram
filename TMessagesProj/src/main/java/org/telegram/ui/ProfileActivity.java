@@ -608,6 +608,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
     private final static int disable_no_forwards = 47;
     private final static int send_money = 48;
     private final static int delete_all_mine = 49;
+    private final static int filter_contact = 50; // this fork: add this person's name to the content filter
 
     private Rect rect = new Rect();
 
@@ -2572,6 +2573,10 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                     finishFragment();
                 } else if (id == block_contact) {
                     onBlockContactClicked(false);
+                } else if (id == filter_contact) {
+                    // this fork: prefill the content filter with this person's name, to edit then save
+                    final TLRPC.User filterUser = getMessagesController().getUser(userId);
+                    FilteredWordsActivity.showEditDialog(ProfileActivity.this, null, filterUser != null ? UserObject.getUserName(filterUser) : null);
                 } else if (id == add_contact) {
                     TLRPC.User user = getMessagesController().getUser(userId);
                     Bundle args = new Bundle();
@@ -12219,6 +12224,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                             }
                         } else {
                             otherItem.addSubItem(block_contact, !userBlocked ? R.drawable.msg_block : R.drawable.msg_block, !userBlocked ? LocaleController.getString(R.string.BlockContact) : LocaleController.getString(R.string.Unblock));
+                            otherItem.addSubItem(filter_contact, R.drawable.msg_block2, LocaleController.getString(R.string.FilterAction));
                         }
                     }
                 } else {
@@ -12229,6 +12235,7 @@ public class ProfileActivity extends BaseFragment implements NotificationCenter.
                         otherItem.addSubItem(share_contact, R.drawable.msg_share, LocaleController.getString(R.string.ShareContact));
                     }
                     otherItem.addSubItem(block_contact, !userBlocked ? R.drawable.msg_block : R.drawable.msg_block, !userBlocked ? LocaleController.getString(R.string.BlockContact) : LocaleController.getString(R.string.Unblock));
+                    otherItem.addSubItem(filter_contact, R.drawable.msg_block2, LocaleController.getString(R.string.FilterAction));
                     otherItem.addSubItem(edit_contact, R.drawable.msg_edit, LocaleController.getString(R.string.EditContact));
                     otherItem.addSubItem(delete_contact, R.drawable.msg_delete, LocaleController.getString(R.string.DeleteContact));
                 }

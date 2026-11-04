@@ -11681,4 +11681,13 @@
     <string name="WipePasscodeConfirmInfo">Your real passcode always brings your own chats back.</string>
     <string name="WipePasscodeSameAsReal">That\'s your passcode. Choose a different one.</string>
     <string name="WipePasscodeSameAsFake">That\'s your fake passcode. Choose a different one.</string>
+    <string name="FilteredWords">Filtered Words</string>
+    <string name="FilteredWordsPrivacyInfo">Hide messages, posts, chats and people containing words you choose</string>
+    <string name="FilteredWordsAdd">Add a Word</string>
+    <string name="FilteredWordsEmpty">No filtered words yet. Add one here, or long-press a message or chat and choose Filter.</string>
+    <string name="FilteredWordsInfo">Messages, channel posts, chats and people that contain any of these words are hidden everywhere, ignoring case. This only changes what you see on this device.</string>
+    <string name="FilteredWordHint">Word or phrase</string>
+    <string name="FilteredWordAddTitle">Filter a word</string>
+    <string name="FilteredWordEditTitle">Edit filtered word</string>
+    <string name="FilterAction">Filter…</string>
 </resources>
